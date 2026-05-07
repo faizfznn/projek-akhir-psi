@@ -155,6 +155,32 @@ fun LoginScreen(
                 modifier = Modifier.fillMaxWidth()
             )
 
+            AppButton(
+                text = "Masuk Instant",
+                buttonType = ButtonType.PRIMARY,
+                enabled = !isLoading,
+                onClick = {
+                    isLoading = true
+                    email = "test@test.com"
+                    password = "123456"
+                    auth.signInWithEmailAndPassword(email, password)
+                        .addOnCompleteListener { task ->
+                            isLoading = false
+                            if (task.isSuccessful) {
+                                val uid = auth.currentUser?.uid
+                                if (uid != null) {
+                                    onLoginSuccess(uid)
+                                } else {
+                                    errorMessage = "Login gagal. UID pengguna tidak ditemukan."
+                                }
+                            } else {
+                                errorMessage = task.exception?.localizedMessage
+                                    ?: "Login gagal. Periksa email dan kata sandi."
+                            }  
+                        }
+                }
+            )
+
             Spacer(modifier = Modifier.height(20.dp))
 
             Row(
