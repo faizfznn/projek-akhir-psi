@@ -28,7 +28,7 @@ data class InformatikaItem(
     val title: String,
     val subtitle: String,
     val icon: Int,
-    val route: String
+    val route: String? = null
 )
 
 @Composable
@@ -44,32 +44,27 @@ fun InformatikaScreen(navController: NavController) {
         InformatikaItem(
             "CSS",
             "CSS dasar",
-            R.drawable.ic_css,
-            "css_screen"
+            R.drawable.ic_css
         ),
         InformatikaItem(
             "Javascript",
             "Javascript dasar",
-            R.drawable.ic_javascript,
-            "javascript_screen"
+            R.drawable.ic_javascript
         ),
         InformatikaItem(
             "Java",
             "Java dasar",
-            R.drawable.ic_java,
-            "java_screen"
+            R.drawable.ic_java
         ),
         InformatikaItem(
             "Python",
             "Python dasar",
-            R.drawable.ic_python,
-            "python_screen"
+            R.drawable.ic_python
         ),
         InformatikaItem(
             "C#",
             "C# dasar",
-            R.drawable.ic_csharp,
-            "csharp_screen"
+            R.drawable.ic_csharp
         )
     )
 
@@ -142,7 +137,9 @@ fun InformatikaScreen(navController: NavController) {
                 InformatikaCard(
                     item = item,
                     onClick = {
-                        navController.navigate(item.route)
+                        item.route?.let {
+                            navController.navigate(it)
+                        }
                     }
                 )
             }

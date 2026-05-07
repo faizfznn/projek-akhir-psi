@@ -260,8 +260,40 @@ fun AppNavigation() {
             BelajarScreen(navController = navController)
         }
 
+        composable("bahasa_screen") {
+            Text("Screen Bahasa")
+        }
+
+        composable("matematika_screen") {
+            Text("Screen Matematika")
+        }
+
+        composable("fisika_screen") {
+            Text("Screen Fisika")
+        }
+
+        composable("kimia_screen") {
+            Text("Screen Kimia")
+        }
+
         composable("informatika_screen") {
             InformatikaScreen(navController = navController)
+        }
+
+        composable("biologi_screen") {
+            Text("Screen Biologi")
+        }
+
+        composable("sosiologi_screen") {
+            Text("Screen Sosiologi")
+        }
+
+        composable("ekonomi_screen") {
+            Text("Screen Ekonomi")
+        }
+
+        composable("geografi_screen") {
+            Text("Screen Geografi")
         }
 
         composable("html_screen") {
