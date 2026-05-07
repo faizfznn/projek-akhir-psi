@@ -27,6 +27,10 @@ import androidx.media3.ui.PlayerView
 import androidx.navigation.NavController
 import com.kelompok2.scarla.R
 import kotlinx.coroutines.delay
+import androidx.compose.runtime.saveable.listSaver
+import androidx.compose.runtime.toMutableStateList
+import androidx.compose.foundation.Image
+import androidx.compose.ui.res.painterResource
 
 data class MateriItem(
     val title: String,
@@ -41,11 +45,21 @@ fun HtmlScreen(navController: NavController) {
 
     val context = LocalContext.current
 
-    val downloadedList = rememberSaveable {
+    val downloadedList = rememberSaveable(
+        saver = listSaver(
+            save = { it.toList() },
+            restore = { it.toMutableStateList() }
+        )
+    ) {
         mutableStateListOf(false, false, false)
     }
 
-    val finishedList = rememberSaveable {
+    val finishedList = rememberSaveable(
+        saver = listSaver(
+            save = { it.toList() },
+            restore = { it.toMutableStateList() }
+        )
+    ) {
         mutableStateListOf(false, false, false)
     }
 
@@ -148,18 +162,24 @@ fun HtmlScreen(navController: NavController) {
 
             if (selectedVideo == null) {
 
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .background(Color.Gray),
-                    contentAlignment = Alignment.Center
-                ) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(Color.White),
+                        contentAlignment = Alignment.Center
+                    ) {
 
-                    Text(
-                        text = "Preview Video HTML",
-                        color = Color.White
-                    )
-                }
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+
+                            Image(
+                                painter = painterResource(id = R.drawable.ic_html),
+                                contentDescription = null,
+                                modifier = Modifier.size(90.dp)
+                            )
+                        }
+                    }
 
             } else {
 
@@ -180,9 +200,7 @@ fun HtmlScreen(navController: NavController) {
                             playWhenReady = true
                         }
 
-                    onDispose {
-                        exoPlayer?.release()
-                    }
+                    onDispose { }
                 }
 
                 AndroidView(
