@@ -1,21 +1,9 @@
 package com.kelompok2.scarla.ui.screens
 
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
+import com.kelompok2.scarla.ui.screens.cari.CariFriendRoute
 
 @Composable
 fun CariScreen() {
-    Column(
-        modifier = Modifier.fillMaxSize(),
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Text(text = "Page Cari", style = MaterialTheme.typography.headlineLarge)
-    }
+    CariFriendRoute()
 }
