@@ -5,6 +5,7 @@ import androidx.compose.animation.AnimatedContentTransitionScope
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.navigation.compose.NavHost
@@ -14,6 +15,7 @@ import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 import com.kelompok2.scarla.ui.screens.AuthChoiceScreen
+import com.kelompok2.scarla.ui.screens.BelajarScreen
 import com.kelompok2.scarla.ui.screens.EducationLevelScreen
 import com.kelompok2.scarla.ui.screens.EditAvatarScreen
 import com.kelompok2.scarla.ui.screens.EditInterestsScreen
@@ -249,6 +251,46 @@ fun AppNavigation() {
                 onBack = { navController.popBackStack() },
                 onSaveSuccess = { navController.popBackStack() }
             )
+        }
+
+        composable("belajar") {
+            BelajarScreen(navController = navController)
+        }
+
+        composable("bahasa_screen") {
+            Text("Screen Bahasa")
+        }
+
+        composable("matematika_screen") {
+            Text("Screen Matematika")
+        }
+
+        composable("fisika_screen") {
+            Text("Screen Fisika")
+        }
+
+        composable("kimia_screen") {
+            Text("Screen Kimia")
+        }
+
+        composable("informatika_screen") {
+            Text("Screen Informatika")
+        }
+
+        composable("biologi_screen") {
+            Text("Screen Biologi")
+        }
+
+        composable("sosiologi_screen") {
+            Text("Screen Sosiologi")
+        }
+
+        composable("ekonomi_screen") {
+            Text("Screen Ekonomi")
+        }
+
+        composable("geografi_screen") {
+            Text("Screen Geografi")
         }
     }
 }
