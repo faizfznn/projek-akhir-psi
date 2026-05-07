@@ -17,15 +17,17 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.kelompok2.scarla.R
+import androidx.compose.ui.text.style.TextAlign
 
 data class SubjectItem(
     val title: String,
     val subtitle: String,
     val icon: Int,
-    val route: String
+    val route: String? = null
 )
 
 @Composable
@@ -41,50 +43,42 @@ fun BelajarScreen(navController: NavController) {
         SubjectItem(
             "Bahasa",
             "Belajar banyak bahasa",
-            R.drawable.ic_bahasa,
-            "bahasa_screen"
+            R.drawable.ic_bahasa
         ),
         SubjectItem(
-            "Matematika",
+            "Math",
             "Belajar matematika",
-            R.drawable.ic_matematika,
-            "matematika_screen"
+            R.drawable.ic_matematika
         ),
         SubjectItem(
             "Fisika",
             "Belajar fisika",
-            R.drawable.ic_fisika,
-            "fisika_screen"
+            R.drawable.ic_fisika
         ),
         SubjectItem(
             "Kimia",
             "Belajar kimia",
-            R.drawable.ic_kimia,
-            "kimia_screen"
+            R.drawable.ic_kimia
         ),
         SubjectItem(
             "Biologi",
             "Belajar biologi",
-            R.drawable.ic_biologi,
-            "biologi_screen"
+            R.drawable.ic_biologi
         ),
         SubjectItem(
             "Sosiologi",
             "Belajar sosiologi",
-            R.drawable.ic_sosiologi,
-            "sosiologi_screen"
+            R.drawable.ic_sosiologi
         ),
         SubjectItem(
             "Ekonomi",
             "Belajar ekonomi",
-            R.drawable.ic_ekonomi,
-            "ekonomi_screen"
+            R.drawable.ic_ekonomi
         ),
         SubjectItem(
             "Geografi",
             "Belajar geografi",
-            R.drawable.ic_geografi,
-            "geografi_screen"
+            R.drawable.ic_geografi
         )
     )
 
@@ -142,7 +136,9 @@ fun BelajarScreen(navController: NavController) {
                 SubjectCard(
                     item = item,
                     onClick = {
-                        navController.navigate(item.route)
+                        item.route?.let {
+                            navController.navigate(it)
+                        }
                     }
                 )
             }
@@ -155,39 +151,34 @@ fun SubjectCard(
     item: SubjectItem,
     onClick: () -> Unit
 ) {
-
     Card(
         modifier = Modifier
-            .height(190.dp)
-            .clickable {
-                onClick()
-            },
+            .height(200.dp) // Sedikit ditambah tingginya agar tidak terlalu sesak
+            .clickable { onClick() },
         shape = RoundedCornerShape(18.dp),
         elevation = CardDefaults.cardElevation(4.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = Color.White
-        )
+        colors = CardDefaults.cardColors(containerColor = Color.White)
     ) {
-
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(10.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.SpaceBetween
+            verticalArrangement = Arrangement.SpaceBetween // Mengatur jarak antar elemen secara merata
         ) {
-
             Column(
-                horizontalAlignment = Alignment.CenterHorizontally
+                horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = Modifier.fillMaxWidth()
             ) {
-
                 Text(
                     text = item.title,
                     style = MaterialTheme.typography.bodyLarge,
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.Bold,
+                    textAlign = TextAlign.Center, // Memastikan teks di tengah secara internal
+                    modifier = Modifier.fillMaxWidth()
                 )
 
-                Spacer(modifier = Modifier.height(10.dp))
+                Spacer(modifier = Modifier.height(8.dp))
 
                 Image(
                     painter = painterResource(id = item.icon),
@@ -201,7 +192,10 @@ fun SubjectCard(
                 Text(
                     text = item.subtitle,
                     style = MaterialTheme.typography.bodySmall,
-                    color = Color.Gray
+                    color = Color.Gray,
+                    textAlign = TextAlign.Center, // Memastikan subjudul juga center
+                    modifier = Modifier.fillMaxWidth(),
+                    lineHeight = TextUnit.Unspecified // Mencegah spasi baris yang aneh
                 )
             }
 
@@ -211,13 +205,14 @@ fun SubjectCard(
                 colors = ButtonDefaults.buttonColors(
                     containerColor = Color(0xFFFFC107)
                 ),
+                contentPadding = PaddingValues(0.dp), // Menghilangkan padding internal tombol agar teks muat
                 shape = RoundedCornerShape(14.dp)
             ) {
-
                 Text(
                     text = "Mulai",
                     color = Color.Black,
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.Bold,
+                    style = MaterialTheme.typography.labelLarge
                 )
             }
         }
