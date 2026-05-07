@@ -105,7 +105,12 @@ fun MainScreen(navController: NavController? = null) {
                 0 -> HomeScreen()
                 1 -> PesanScreen()
                 2 -> CariScreen()
-                3 -> BelajarScreen()
+                3 -> {
+                    // Gunakan let untuk mengecek jika navController tidak null
+                    navController?.let {
+                        BelajarScreen(navController = it)
+                    } ?: Text("Loading Navigation...", modifier = Modifier.align(Alignment.Center))
+                }
                 4 -> {
                     if (showSettingsFromProfile) {
                         SettingsScreen(

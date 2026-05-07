@@ -7,7 +7,10 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -21,7 +24,7 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.kelompok2.scarla.R
 
-data class SubjectItem(
+data class InformatikaItem(
     val title: String,
     val subtitle: String,
     val icon: Int,
@@ -29,62 +32,44 @@ data class SubjectItem(
 )
 
 @Composable
-fun BelajarScreen(navController: NavController) {
+fun InformatikaScreen(navController: NavController) {
 
-    val subjects = listOf(
-        SubjectItem(
-            "Informatika",
-            "Belajar informatika",
-            R.drawable.ic_informatika,
-            "informatika_screen"
+    val materiList = listOf(
+        InformatikaItem(
+            "HTML",
+            "HTML dasar",
+            R.drawable.ic_html,
+            "html_screen"
         ),
-        SubjectItem(
-            "Bahasa",
-            "Belajar banyak bahasa",
-            R.drawable.ic_bahasa,
-            "bahasa_screen"
+        InformatikaItem(
+            "CSS",
+            "CSS dasar",
+            R.drawable.ic_css,
+            "css_screen"
         ),
-        SubjectItem(
-            "Matematika",
-            "Belajar matematika",
-            R.drawable.ic_matematika,
-            "matematika_screen"
+        InformatikaItem(
+            "Javascript",
+            "Javascript dasar",
+            R.drawable.ic_javascript,
+            "javascript_screen"
         ),
-        SubjectItem(
-            "Fisika",
-            "Belajar fisika",
-            R.drawable.ic_fisika,
-            "fisika_screen"
+        InformatikaItem(
+            "Java",
+            "Java dasar",
+            R.drawable.ic_java,
+            "java_screen"
         ),
-        SubjectItem(
-            "Kimia",
-            "Belajar kimia",
-            R.drawable.ic_kimia,
-            "kimia_screen"
+        InformatikaItem(
+            "Python",
+            "Python dasar",
+            R.drawable.ic_python,
+            "python_screen"
         ),
-        SubjectItem(
-            "Biologi",
-            "Belajar biologi",
-            R.drawable.ic_biologi,
-            "biologi_screen"
-        ),
-        SubjectItem(
-            "Sosiologi",
-            "Belajar sosiologi",
-            R.drawable.ic_sosiologi,
-            "sosiologi_screen"
-        ),
-        SubjectItem(
-            "Ekonomi",
-            "Belajar ekonomi",
-            R.drawable.ic_ekonomi,
-            "ekonomi_screen"
-        ),
-        SubjectItem(
-            "Geografi",
-            "Belajar geografi",
-            R.drawable.ic_geografi,
-            "geografi_screen"
+        InformatikaItem(
+            "C#",
+            "C# dasar",
+            R.drawable.ic_csharp,
+            "csharp_screen"
         )
     )
 
@@ -106,23 +91,38 @@ fun BelajarScreen(navController: NavController) {
             )
         ) {
 
-            Column(
-                modifier = Modifier.padding(24.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(18.dp),
+                verticalAlignment = Alignment.CenterVertically
             ) {
 
+                IconButton(
+                    onClick = {
+                        navController.popBackStack()
+                    },
+                    modifier = Modifier
+                        .background(
+                            Color(0xFFFFC107),
+                            CircleShape
+                        )
+                        .size(38.dp)
+                ) {
+
+                    Icon(
+                        imageVector = Icons.Default.ArrowBack,
+                        contentDescription = "Back",
+                        tint = Color.Black
+                    )
+                }
+
+                Spacer(modifier = Modifier.width(16.dp))
+
                 Text(
-                    text = "Mau belajar apa hari ini?",
+                    text = "Informatika",
                     style = MaterialTheme.typography.headlineSmall,
                     fontWeight = FontWeight.Bold
-                )
-
-                Spacer(modifier = Modifier.height(8.dp))
-
-                Text(
-                    text = "“Setiap detik belajar, mendekatkanmu pada impian”",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = Color.Gray
                 )
             }
         }
@@ -137,9 +137,9 @@ fun BelajarScreen(navController: NavController) {
             contentPadding = PaddingValues(bottom = 20.dp)
         ) {
 
-            items(subjects) { item ->
+            items(materiList) { item ->
 
-                SubjectCard(
+                InformatikaCard(
                     item = item,
                     onClick = {
                         navController.navigate(item.route)
@@ -151,8 +151,8 @@ fun BelajarScreen(navController: NavController) {
 }
 
 @Composable
-fun SubjectCard(
-    item: SubjectItem,
+fun InformatikaCard(
+    item: InformatikaItem,
     onClick: () -> Unit
 ) {
 

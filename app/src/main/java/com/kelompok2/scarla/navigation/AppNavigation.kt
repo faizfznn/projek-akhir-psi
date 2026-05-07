@@ -5,6 +5,7 @@ import androidx.compose.animation.AnimatedContentTransitionScope
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.navigation.compose.NavHost
@@ -14,11 +15,13 @@ import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 import com.kelompok2.scarla.ui.screens.AuthChoiceScreen
+import com.kelompok2.scarla.ui.screens.BelajarScreen
 import com.kelompok2.scarla.ui.screens.EducationLevelScreen
 import com.kelompok2.scarla.ui.screens.EditAvatarScreen
 import com.kelompok2.scarla.ui.screens.EditInterestsScreen
 import com.kelompok2.scarla.ui.screens.EditMbtiScreen
 import com.kelompok2.scarla.ui.screens.EditProfileScreen
+import com.kelompok2.scarla.ui.screens.InformatikaScreen
 import com.kelompok2.scarla.ui.screens.InterestsScreen
 import com.kelompok2.scarla.ui.screens.LoginScreen
 import com.kelompok2.scarla.ui.screens.MainScreen
@@ -30,6 +33,8 @@ import com.kelompok2.scarla.ui.screens.ScreenStreak
 import com.kelompok2.scarla.ui.screens.SettingsScreen
 import com.kelompok2.scarla.ui.screens.SignupScreen
 import com.kelompok2.scarla.ui.screens.SplashScreen
+import com.kelompok2.scarla.ui.screens.HtmlScreen
+import com.kelompok2.scarla.ui.screens.QuizHtmlScreen
 
 private val firestore by lazy { FirebaseFirestore.getInstance() }
 
@@ -250,6 +255,55 @@ fun AppNavigation() {
                 onSaveSuccess = { navController.popBackStack() }
             )
         }
+
+        composable("belajar") {
+            BelajarScreen(navController = navController)
+        }
+
+        composable("bahasa_screen") {
+            Text("Screen Bahasa")
+        }
+
+        composable("matematika_screen") {
+            Text("Screen Matematika")
+        }
+
+        composable("fisika_screen") {
+            Text("Screen Fisika")
+        }
+
+        composable("kimia_screen") {
+            Text("Screen Kimia")
+        }
+
+        composable("informatika_screen") {
+            InformatikaScreen(navController = navController)
+        }
+
+        composable("biologi_screen") {
+            Text("Screen Biologi")
+        }
+
+        composable("sosiologi_screen") {
+            Text("Screen Sosiologi")
+        }
+
+        composable("ekonomi_screen") {
+            Text("Screen Ekonomi")
+        }
+
+        composable("geografi_screen") {
+            Text("Screen Geografi")
+        }
+
+        composable("html_screen") {
+            HtmlScreen(navController = navController)
+        }
+
+        composable("quiz_html") {
+            QuizHtmlScreen(navController = navController)
+        }
+
     }
 }
 

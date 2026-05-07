@@ -42,6 +42,7 @@ android {
 }
 
 dependencies {
+    implementation(libs.ads.mobile.sdk)
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
@@ -59,6 +60,10 @@ dependencies {
     debugImplementation(libs.androidx.compose.ui.test.manifest)
 
     implementation("androidx.compose.material:material-icons-extended:1.7.0")
+
+    // video
+    implementation("androidx.media3:media3-exoplayer:1.3.1")
+    implementation("androidx.media3:media3-ui:1.3.1")
 
     // UI Enhancements (Lottie & Coil-GIF)
     implementation("io.coil-kt:coil-compose:2.6.0")
