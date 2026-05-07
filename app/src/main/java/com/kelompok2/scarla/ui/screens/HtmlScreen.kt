@@ -151,7 +151,7 @@ fun HtmlScreen(navController: NavController) {
             }
         }
 
-        // VIDEO
+        // VIDEONYA
         Card(
             modifier = Modifier
                 .fillMaxWidth()
