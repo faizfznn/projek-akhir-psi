@@ -21,6 +21,7 @@ import com.kelompok2.scarla.ui.screens.EditAvatarScreen
 import com.kelompok2.scarla.ui.screens.EditInterestsScreen
 import com.kelompok2.scarla.ui.screens.EditMbtiScreen
 import com.kelompok2.scarla.ui.screens.EditProfileScreen
+import com.kelompok2.scarla.ui.screens.InformatikaScreen
 import com.kelompok2.scarla.ui.screens.InterestsScreen
 import com.kelompok2.scarla.ui.screens.LoginScreen
 import com.kelompok2.scarla.ui.screens.MainScreen
@@ -32,6 +33,8 @@ import com.kelompok2.scarla.ui.screens.ScreenStreak
 import com.kelompok2.scarla.ui.screens.SettingsScreen
 import com.kelompok2.scarla.ui.screens.SignupScreen
 import com.kelompok2.scarla.ui.screens.SplashScreen
+import com.kelompok2.scarla.ui.screens.HtmlScreen
+import com.kelompok2.scarla.ui.screens.QuizHtmlScreen
 
 private val firestore by lazy { FirebaseFirestore.getInstance() }
 
@@ -274,7 +277,7 @@ fun AppNavigation() {
         }
 
         composable("informatika_screen") {
-            Text("Screen Informatika")
+            InformatikaScreen(navController = navController)
         }
 
         composable("biologi_screen") {
@@ -292,6 +295,15 @@ fun AppNavigation() {
         composable("geografi_screen") {
             Text("Screen Geografi")
         }
+
+        composable("html_screen") {
+            HtmlScreen(navController = navController)
+        }
+
+        composable("quiz_html") {
+            QuizHtmlScreen(navController = navController)
+        }
+
     }
 }
 
