@@ -22,6 +22,8 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.kelompok2.scarla.R
 import androidx.compose.ui.text.style.TextAlign
+import com.kelompok2.scarla.ui.theme.*
+import com.kelompok2.scarla.ui.components.*
 
 data class SubjectItem(
     val title: String,
@@ -116,7 +118,7 @@ fun BelajarScreen(navController: NavController) {
                 Text(
                     text = "“Setiap detik belajar, mendekatkanmu pada impian”",
                     style = MaterialTheme.typography.bodySmall,
-                    color = Color.Gray
+                    color = Neutral700
                 )
             }
         }
@@ -157,7 +159,7 @@ fun SubjectCard(
             .clickable { onClick() },
         shape = RoundedCornerShape(18.dp),
         elevation = CardDefaults.cardElevation(4.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White)
+        colors = CardDefaults.cardColors(containerColor = Neutral50)
     ) {
         Column(
             modifier = Modifier
@@ -192,29 +194,19 @@ fun SubjectCard(
                 Text(
                     text = item.subtitle,
                     style = MaterialTheme.typography.bodySmall,
-                    color = Color.Gray,
+                    color = Neutral700,
                     textAlign = TextAlign.Center, // Memastikan subjudul juga center
                     modifier = Modifier.fillMaxWidth(),
                     lineHeight = TextUnit.Unspecified // Mencegah spasi baris yang aneh
                 )
             }
 
-            Button(
+            AppButton(
+                text = "Mulai",
                 onClick = onClick,
                 modifier = Modifier.fillMaxWidth(),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = Color(0xFFFFC107)
-                ),
-                contentPadding = PaddingValues(0.dp), // Menghilangkan padding internal tombol agar teks muat
-                shape = RoundedCornerShape(14.dp)
-            ) {
-                Text(
-                    text = "Mulai",
-                    color = Color.Black,
-                    fontWeight = FontWeight.Bold,
-                    style = MaterialTheme.typography.labelLarge
-                )
-            }
+                buttonType = ButtonType.PRIMARY
+            )
         }
     }
 }

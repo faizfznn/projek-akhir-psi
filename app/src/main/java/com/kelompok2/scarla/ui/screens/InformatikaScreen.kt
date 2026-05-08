@@ -23,6 +23,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.kelompok2.scarla.R
+import com.kelompok2.scarla.ui.theme.*
+import com.kelompok2.scarla.ui.components.*
 
 data class InformatikaItem(
     val title: String,
@@ -79,10 +81,10 @@ fun InformatikaScreen(navController: NavController) {
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(12.dp)
-                .shadow(6.dp, RoundedCornerShape(20.dp)),
-            shape = RoundedCornerShape(20.dp),
+                .shadow(6.dp, RoundedCornerShape(12.dp)),
+            shape = RoundedCornerShape(12.dp),
             colors = CardDefaults.cardColors(
-                containerColor = Color(0xFFEAEAEA)
+                containerColor = Neutral50
             )
         ) {
 
@@ -99,7 +101,7 @@ fun InformatikaScreen(navController: NavController) {
                     },
                     modifier = Modifier
                         .background(
-                            Color(0xFFFFC107),
+                            Primary500,
                             CircleShape
                         )
                         .size(38.dp)
@@ -108,7 +110,7 @@ fun InformatikaScreen(navController: NavController) {
                     Icon(
                         imageVector = Icons.Default.ArrowBack,
                         contentDescription = "Back",
-                        tint = Color.Black
+                        tint = Neutral900
                     )
                 }
 
@@ -159,10 +161,10 @@ fun InformatikaCard(
             .clickable {
                 onClick()
             },
-        shape = RoundedCornerShape(18.dp),
+        shape = RoundedCornerShape(12.dp),
         elevation = CardDefaults.cardElevation(4.dp),
         colors = CardDefaults.cardColors(
-            containerColor = Color.White
+            containerColor = Neutral50
         )
     ) {
 
@@ -198,25 +200,18 @@ fun InformatikaCard(
                 Text(
                     text = item.subtitle,
                     style = MaterialTheme.typography.bodySmall,
-                    color = Color.Gray
+                    color = Neutral700
                 )
             }
 
-            Button(
+            AppButton(
+                text = "Mulai",
                 onClick = onClick,
-                modifier = Modifier.fillMaxWidth(),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = Color(0xFFFFC107)
-                ),
-                shape = RoundedCornerShape(14.dp)
-            ) {
 
-                Text(
-                    text = "Mulai",
-                    color = Color.Black,
-                    fontWeight = FontWeight.Bold
-                )
-            }
+                modifier = Modifier.fillMaxWidth(),
+
+                buttonType = ButtonType.PRIMARY
+            )
         }
     }
 }
