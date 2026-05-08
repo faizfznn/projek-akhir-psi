@@ -1,6 +1,7 @@
 package com.kelompok2.scarla.ui.screens
 
 import android.net.Uri
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -31,6 +32,9 @@ import androidx.compose.runtime.saveable.listSaver
 import androidx.compose.runtime.toMutableStateList
 import androidx.compose.foundation.Image
 import androidx.compose.ui.res.painterResource
+import androidx.compose.material3.MaterialTheme
+import com.kelompok2.scarla.ui.theme.*
+import com.kelompok2.scarla.ui.components.*
 
 data class MateriItem(
     val title: String,
@@ -114,7 +118,14 @@ fun HtmlScreen(navController: NavController) {
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(12.dp),
-            shape = RoundedCornerShape(18.dp)
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surface
+            ),
+
+            border = BorderStroke(
+                1.dp,
+                Neutral200
+            )
         ) {
 
             Row(
@@ -130,7 +141,7 @@ fun HtmlScreen(navController: NavController) {
                     },
                     modifier = Modifier
                         .background(
-                            Color(0xFFFFC107),
+                            Primary500,
                             CircleShape
                         )
                 ) {
@@ -157,7 +168,7 @@ fun HtmlScreen(navController: NavController) {
                 .fillMaxWidth()
                 .height(220.dp)
                 .padding(horizontal = 12.dp),
-            shape = RoundedCornerShape(18.dp)
+            shape = RoundedCornerShape(12.dp)
         ) {
 
             if (selectedVideo == null) {
@@ -165,7 +176,7 @@ fun HtmlScreen(navController: NavController) {
                     Box(
                         modifier = Modifier
                             .fillMaxSize()
-                            .background(Color.White),
+                            .background(Neutral50),
                         contentAlignment = Alignment.Center
                     ) {
 
@@ -227,7 +238,7 @@ fun HtmlScreen(navController: NavController) {
         Text(
             text = "Materi",
             modifier = Modifier.padding(horizontal = 16.dp),
-            fontWeight = FontWeight.Bold
+            style = MaterialTheme.typography.titleLarge
         )
 
         Spacer(modifier = Modifier.height(8.dp))
@@ -240,7 +251,7 @@ fun HtmlScreen(navController: NavController) {
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(horizontal = 12.dp, vertical = 6.dp),
-                    shape = RoundedCornerShape(16.dp)
+                    shape = RoundedCornerShape(12.dp)
                 ) {
 
                     Row(
@@ -261,7 +272,7 @@ fun HtmlScreen(navController: NavController) {
 
                             Text(
                                 text = item.duration,
-                                color = Color.Gray
+                                color = Neutral500
                             )
                         }
 
@@ -278,7 +289,7 @@ fun HtmlScreen(navController: NavController) {
                                 Icon(
                                     imageVector = Icons.Default.Download,
                                     contentDescription = null,
-                                    tint = Color.Gray
+                                    tint = Neutral700
                                 )
                             }
                         }
@@ -296,11 +307,12 @@ fun HtmlScreen(navController: NavController) {
                             colors = ButtonDefaults.buttonColors(
                                 containerColor =
                                     when {
-                                        finishedList[index] -> Color(0xFF4CAF50)
-                                        downloadedList[index] -> Color(0xFFFFC107)
-                                        else -> Color.LightGray
+                                        finishedList[index] -> Success
+                                        downloadedList[index] -> Primary500
+                                        else -> Neutral500
                                     }
-                            )
+                            ),
+                            shape = RoundedCornerShape(12.dp)
                         ) {
 
                             Icon(
@@ -329,7 +341,7 @@ fun HtmlScreen(navController: NavController) {
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(12.dp),
-                    shape = RoundedCornerShape(16.dp)
+                    shape = RoundedCornerShape(12.dp)
                 ) {
 
                     Row(
@@ -353,21 +365,18 @@ fun HtmlScreen(navController: NavController) {
                             )
                         }
 
-                        Button(
-                            enabled = allFinished,
+                        AppButton(
+                            text = "Mulai",
                             onClick = {
                                 navController.navigate("quiz_html")
                             },
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor =
-                                    if (allFinished)
-                                        Color(0xFFFFC107)
-                                    else
-                                        Color.LightGray
-                            )
-                        ) {
-                            Text("Mulai")
-                        }
+
+                            enabled = allFinished,
+
+                            modifier = Modifier.wrapContentWidth(),
+
+                            buttonType = ButtonType.PRIMARY
+                        )
                     }
                 }
             }
@@ -423,7 +432,10 @@ fun HtmlScreen(navController: NavController) {
                         showSuccessDialog = false
                     }
                 ) {
-                    Text("OK")
+                    Text(
+                        text = "OK",
+                        color = Neutral900
+                    )
                 }
             },
             title = {
@@ -435,8 +447,8 @@ fun HtmlScreen(navController: NavController) {
 
                     Text(
                         text = "SUKSES!",
-                        color = Color.Green,
-                        fontWeight = FontWeight.Bold
+                        color = Success,
+                        style = MaterialTheme.typography.titleLarge
                     )
 
                     Text("berhasil diunduh")

@@ -46,3 +46,7 @@ val DisabledTextGray = Color(0xFF71717A)
 
 // Auth Background
 val AuthBackground = Color(0xFFFFFCE5)
+
+// Success Error
+val Success = Color(0xFF4CAF50)
+val Error = Color(0xFFF44336)

@@ -1,6 +1,7 @@
 package com.kelompok2.scarla.ui.screens
 
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
@@ -14,6 +15,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
@@ -23,6 +25,8 @@ import com.kelompok2.scarla.R
 import com.kelompok2.scarla.ui.components.AppButton
 import com.kelompok2.scarla.ui.components.ButtonType
 import kotlinx.coroutines.launch
+import com.kelompok2.scarla.ui.theme.*
+import com.kelompok2.scarla.ui.components.*
 
 // Data class untuk menampung isi brief
 data class OnboardingData(
@@ -54,12 +58,23 @@ fun OnboardingScreen(onFinished: () -> Unit) {
 
     Scaffold(
         topBar = {
-            Box(modifier = Modifier.fillMaxWidth().padding(16.dp), contentAlignment = Alignment.TopEnd) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                contentAlignment = Alignment.TopEnd
+            ) {
+
                 if (pagerState.currentPage < pages.size - 1) {
-                    AppButton(
+
+                    Text(
                         text = "Skip",
-                        buttonType = ButtonType.TERTIARY,
-                        onClick = onFinished
+                        color = Secondary500,
+                        style = MaterialTheme.typography.labelLarge,
+                        textDecoration = TextDecoration.Underline,
+                        modifier = Modifier.clickable {
+                            onFinished()
+                        }
                     )
                 }
             }

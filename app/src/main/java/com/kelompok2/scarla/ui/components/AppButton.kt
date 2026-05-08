@@ -65,7 +65,7 @@ fun AppButton(
         onClick = onClick,
         modifier = modifier.height(48.dp),
         enabled = enabled,
-        shape = RoundedCornerShape(8.dp),
+        shape = RoundedCornerShape(12.dp),
         colors = buttonColors,
         border = border,
         contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp)
