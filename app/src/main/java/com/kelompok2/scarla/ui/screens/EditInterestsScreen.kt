@@ -102,8 +102,7 @@ fun EditInterestsScreen(
     if (isLoading) {
         Box(
             modifier = Modifier
-                .fillMaxSize()
-                .background(AuthBackground),
+                .fillMaxSize(),
             contentAlignment = Alignment.Center
         ) {
             CircularProgressIndicator(color = Primary500)
@@ -114,7 +113,6 @@ fun EditInterestsScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(AuthBackground)
             .verticalScroll(rememberScrollState())
             .padding(bottom = 24.dp)
     ) {

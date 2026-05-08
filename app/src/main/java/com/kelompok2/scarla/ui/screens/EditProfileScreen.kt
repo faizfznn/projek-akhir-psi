@@ -127,8 +127,7 @@ fun EditProfileScreen(
     if (isLoading) {
         Box(
             modifier = Modifier
-                .fillMaxSize()
-                .background(AuthBackground),
+                .fillMaxSize(),
             contentAlignment = Alignment.Center
         ) {
             CircularProgressIndicator(color = Secondary500)
@@ -139,7 +138,6 @@ fun EditProfileScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(AuthBackground)
             .verticalScroll(rememberScrollState())
             .padding(bottom = 24.dp)
     ) {

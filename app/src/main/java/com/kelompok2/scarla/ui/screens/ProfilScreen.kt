@@ -194,7 +194,6 @@ fun ProfilScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(AuthBackground)
             .verticalScroll(rememberScrollState())
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)

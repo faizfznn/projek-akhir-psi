@@ -42,7 +42,6 @@ fun AuthChoiceScreen(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(AuthBackground)
     ) {
         // Dekorasi Bubble di Background
         BubbleDecoration(

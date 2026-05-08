@@ -4,17 +4,27 @@ import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -23,7 +33,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.graphicsLayer // Gunakan import ini saja untuk graphicsLayer
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
@@ -38,11 +48,10 @@ import androidx.compose.ui.tooling.preview.Preview
 import com.kelompok2.scarla.R
 import com.kelompok2.scarla.ui.theme.*
 import kotlin.math.absoluteValue
-import android.R.attr.translationZ
 import com.kelompok2.scarla.ui.components.AppButton
 import com.kelompok2.scarla.ui.components.ButtonType
 
-
+// --- DATA MODELS ---
 data class StreakDay(
     val dayName: String,
     val isActive: Boolean
@@ -54,9 +63,16 @@ data class BeaItem(
     val imageRes: Int
 )
 
+data class StudyModule(
+    val title: String,
+    val imageRes: Int
+)
+
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun HomeScreen() {
+    val scrollState = rememberScrollState()
+
     val streakDays = listOf(
         StreakDay("Sen", true),
         StreakDay("Sel", false),
@@ -65,6 +81,11 @@ fun HomeScreen() {
         StreakDay("Jum", false),
         StreakDay("Sab", false),
         StreakDay("Min", false)
+    )
+
+    val studyModules = listOf(
+        StudyModule("Belajar Dasar HTML", R.drawable.ic_html),
+        StudyModule("Belajar Dasar HTML", R.drawable.ic_html)
     )
 
     val scholarshipList = listOf(
@@ -90,56 +111,49 @@ fun HomeScreen() {
         pageCount = { scholarshipList.size }
     )
 
-    Column(
-        verticalArrangement = Arrangement.spacedBy(32.dp, Alignment.Top),
-        horizontalAlignment = Alignment.CenterHorizontally,
+    Box(
         modifier = Modifier
-            .width(430.dp)
-            .height(720.dp)
+            .fillMaxSize()
+            .background(Color(0xFFFCFCFC))
     ) {
-        // Header Logo
         Column(
-            verticalArrangement = Arrangement.spacedBy(10.dp, Alignment.Bottom),
-            horizontalAlignment = Alignment.CenterHorizontally,
             modifier = Modifier
-                .border(width = 2.dp, Neutral300)
-                .padding(2.dp)
-                .width(430.dp)
-                .height(104.dp)
-                .padding(start = 140.dp, top = 10.dp, end = 140.dp, bottom = 10.dp)
+                .fillMaxWidth()
+                .verticalScroll(scrollState)
+                .padding(bottom = 80.dp)
         ) {
-            Image(
-                painter = painterResource(id = R.drawable.font_logo),
-                contentDescription = "Logo",
-                contentScale = ContentScale.FillBounds,
-                modifier = Modifier
-                    .width(200.dp)
-                    .height(20.dp)
-            )
-        }
-
-        // Konten Utama
-        Column(
-            verticalArrangement = Arrangement.spacedBy(24.dp, Alignment.Top),
-            horizontalAlignment = Alignment.Start,
-            modifier = Modifier
-                .width(400.2.dp)
-                .height(560.dp)
-        ) {
-            // Bagian Streak
+            // Header Logo
             Column(
-                verticalArrangement = Arrangement.spacedBy(12.dp, Alignment.Top),
+                verticalArrangement = Arrangement.Center,
                 horizontalAlignment = Alignment.CenterHorizontally,
                 modifier = Modifier
-                    .width(400.2.dp)
-                    .height(151.4.dp)
+                    .fillMaxWidth()
+                    .background(Color.White)
+                    .padding(vertical = 16.dp)
             ) {
+                Image(
+                    painter = painterResource(id = R.drawable.font_logo),
+                    contentDescription = "Logo SCARLA",
+                    contentScale = ContentScale.Fit,
+                    modifier = Modifier
+                        .width(160.dp)
+                        .height(40.dp)
+                )
+            }
+
+            // Wrapper Konten
+            Column(
+                verticalArrangement = Arrangement.spacedBy(20.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 20.dp, vertical = 20.dp)
+            ) {
+
+                // --- 1. Bagian Hello & Notifikasi ---
                 Row(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier
-                        .width(400.2.dp)
-                        .height(36.dp)
+                    modifier = Modifier.fillMaxWidth()
                 ) {
                     Text(
                         text = "Hello, Ahmad",
@@ -147,189 +161,219 @@ fun HomeScreen() {
                             fontSize = 24.sp,
                             fontFamily = FontFamily(Font(R.font.poppins_bold)),
                             fontWeight = FontWeight(700),
-                            color = Neutral900,
-                            textAlign = TextAlign.Center,
+                            color = Neutral900
                         )
                     )
                     Icon(
                         painter = painterResource(id = R.drawable.baseline_notifications_none_24),
                         contentDescription = "Notifications",
-                        modifier = Modifier
-                            .width(32.dp)
-                            .height(32.dp)
+                        tint = Color.Unspecified,
+                        modifier = Modifier.size(28.dp)
                     )
                 }
 
+                // --- 2. Container Streak Mingguan ---
                 Row(
-                    horizontalArrangement = Arrangement.spacedBy(16.dp, Alignment.CenterHorizontally),
-                    verticalAlignment = Alignment.Bottom,
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier
-                        .shadow(elevation = 4.dp, spotColor = Color(0x40000000), ambientColor = Color(0x40000000))
-                        .width(400.2.dp)
-                        .height(103.4.dp)
-                        .background(color = Color(0xFFF5F5F5), shape = RoundedCornerShape(size = 12.dp))
-                        .padding(start = 20.dp, top = 12.dp, end = 20.dp, bottom = 12.dp)
+                        .fillMaxWidth()
+                        .shadow(elevation = 2.dp, shape = RoundedCornerShape(16.dp))
+                        .background(color = Color.White, shape = RoundedCornerShape(16.dp))
+                        .padding(horizontal = 16.dp, vertical = 14.dp)
                 ) {
                     streakDays.forEach { item ->
                         StreakItem(day = item)
                     }
                 }
-            }
 
-            Column(
-                verticalArrangement = Arrangement.spacedBy(12.dp, Alignment.Top),
-                horizontalAlignment = Alignment.Start,
-                modifier = Modifier
-                    .width(400.25571.dp)
-                    .height(212.dp)
-            ) {
-                Text(
-                    text = "Lanjut Belajar",
-                    style = TextStyle(
-                        fontSize = 20.sp,
-                        fontFamily = FontFamily(Font(R.font.poppins_bold)),
-                        fontWeight = FontWeight(700),
-                        color = Neutral900,
-                    )
-                )
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(36.dp, Alignment.Start),
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier
-                        .width(400.25571.dp)
-                        .height(170.dp)
+                // --- 3. Bagian Lanjut Belajar ---
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                    modifier = Modifier.fillMaxWidth()
                 ) {
-                    Column(
-                        verticalArrangement = Arrangement.spacedBy(12.dp, Alignment.Top),
-                        horizontalAlignment = Alignment.CenterHorizontally,
+                    Text(
+                        text = "Lanjut Belajar",
+                        style = TextStyle(
+                            fontSize = 20.sp,
+                            fontFamily = FontFamily(Font(R.font.poppins_bold)),
+                            fontWeight = FontWeight(700),
+                            color = Neutral900
+                        )
+                    )
+
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(16.dp),
+                        verticalAlignment = Alignment.CenterVertically,
                         modifier = Modifier
-                            .width(120.dp)
-                            .height(170.dp)
+                            .fillMaxWidth()
+                            .horizontalScroll(rememberScrollState())
                     ) {
+                        studyModules.forEach { module ->
+                            Column(
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                verticalArrangement = Arrangement.spacedBy(8.dp),
+                                modifier = Modifier.width(135.dp)
+                            ) {
+                                // Card Modul Belajar
+                                Column(
+                                    verticalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterVertically),
+                                    horizontalAlignment = Alignment.CenterHorizontally,
+                                    modifier = Modifier
+                                        .shadow(elevation = 3.dp, shape = RoundedCornerShape(16.dp))
+                                        .background(Color.White, shape = RoundedCornerShape(16.dp))
+                                        .padding(12.dp)
+                                        .size(115.dp)
+                                ) {
+                                    Image(
+                                        painter = painterResource(id = module.imageRes),
+                                        contentDescription = module.title,
+                                        contentScale = ContentScale.Fit,
+                                        modifier = Modifier.size(64.dp)
+                                    )
+                                    Text(
+                                        text = module.title,
+                                        style = TextStyle(
+                                            fontSize = 10.sp,
+                                            fontFamily = FontFamily(Font(R.font.poppins_bold)),
+                                            fontWeight = FontWeight(700),
+                                            color = Color(0xFF333333)
+                                        ),
+                                        textAlign = TextAlign.Center,
+                                        maxLines = 2,
+                                        overflow = TextOverflow.Ellipsis
+                                    )
+                                }
+
+                                // Tombol Kapsul Continue
+                                AppButton(
+                                    text = "Continue",
+                                    buttonType = ButtonType.PRIMARY,
+                                    onClick = { /* Navigasi */ },
+                                    modifier = Modifier
+                                        .width(115.dp)
+                                        .height(32.dp)
+                                )
+                            }
+                        }
+
+                        // Tombol Bulat Continue untuk geser ke kanan
                         Column(
-                            verticalArrangement = Arrangement.spacedBy(4.dp, Alignment.Top),
                             horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.Center,
                             modifier = Modifier
-                                .shadow(elevation = 4.dp, spotColor = Color(0x40000000), ambientColor = Color(0x40000000))
-                                .width(120.dp)
-                                .height(120.dp)
-                                .background(color = Color(0xFFF5F5F5), shape = RoundedCornerShape(size = 12.dp))
-                                .padding(start = 14.dp, top = 7.dp, end = 14.dp, bottom = 7.dp)
+                                .padding(horizontal = 8.dp)
+                                .width(70.dp)
                         ) {
-                            Image(
-                                painter = painterResource(id = R.drawable.ic_html),
-                                contentDescription = "image description",
-                                contentScale = ContentScale.FillBounds,
+                            Box(
+                                contentAlignment = Alignment.Center,
                                 modifier = Modifier
-                                    .width(92.dp)
-                                    .height(87.64497.dp)
-                            )
+                                    .size(42.dp)
+                                    .background(Color(0xFFFFD100), shape = CircleShape)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+                                    contentDescription = "Next",
+                                    tint = Color.White,
+                                    modifier = Modifier.size(20.dp)
+                                )
+                            }
+                            Spacer(modifier = Modifier.height(6.dp))
                             Text(
-                                text = "Belajar Dasar HTML",
+                                text = "Continue",
                                 style = TextStyle(
-                                    fontSize = 12.sp,
-                                    fontFamily = FontFamily(Font(R.font.bubblegum_sans_regular)),
-                                    fontWeight = FontWeight(400),
-                                    color = Neutral900,
+                                    fontSize = 11.sp,
+                                    fontFamily = FontFamily(Font(R.font.poppins_medium)),
+                                    fontWeight = FontWeight(500),
+                                    color = Color(0xFF555555)
                                 )
                             )
                         }
-                        AppButton(
-                            text = "Continue",
-                            buttonType = ButtonType.PRIMARY,
-                            onClick = {
-//                                route = "informatika_screen"
-                            },
-                            modifier = Modifier.fillMaxWidth()
-                        )
                     }
                 }
-            }
 
-            // Bagian Informasi Beasiswa (Carousel)
-            Column(
-                verticalArrangement = Arrangement.spacedBy(16.dp, Alignment.Top),
-                horizontalAlignment = Alignment.Start,
-                modifier = Modifier.width(400.2.dp)
-            ) {
-                Text(
-                    text = "Informasi Beasiswa",
-                    style = TextStyle(
-                        fontSize = 20.sp,
-                        fontFamily = FontFamily(Font(R.font.poppins_bold)),
-                        fontWeight = FontWeight(700),
-                        color = Neutral900,
-                    ),
-                    modifier = Modifier
-                        .padding(start = 16.dp)
-                        .height(30.dp)
-                )
-
-                HorizontalPager(
-                    state = pagerState,
-                    contentPadding = PaddingValues(horizontal = 92.dp),
-                    pageSpacing = 8.dp,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(350.dp)
-                ) { page ->
-                    val pageOffset = (
-                            (pagerState.currentPage - page) + pagerState.currentPageOffsetFraction
-                            ).absoluteValue
-
-                    val scale = lerp(
-                        start = 0.82f,
-                        stop = 1.0f,
-                        fraction = 1f - pageOffset.coerceIn(0f, 1f)
+                // --- 4. Bagian Informasi Beasiswa (Carousel) ---
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(16.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text(
+                        text = "Informasi Beasiswa",
+                        style = TextStyle(
+                            fontSize = 20.sp,
+                            fontFamily = FontFamily(Font(R.font.poppins_bold)),
+                            fontWeight = FontWeight(700),
+                            color = Neutral900
+                        )
                     )
 
-                    val alpha = lerp(
-                        start = 0.5f,
-                        stop = 1.0f,
-                        fraction = 1f - pageOffset.coerceIn(0f, 1f)
-                    )
-
-                    val shadowElevation = lerp(
-                        start = 0f,
-                        stop = 8f,
-                        fraction = 1f - pageOffset.coerceIn(0f, 1f)
-                    )
-
-                    BeasiswaCard(
-                        item = scholarshipList[page],
+                    HorizontalPager(
+                        state = pagerState,
+                        contentPadding = PaddingValues(horizontal = 96.dp),
+                        pageSpacing = 12.dp,
                         modifier = Modifier
-                            .graphicsLayer {
-                                scaleX = scale
-                                scaleY = scale
-                                this.alpha = alpha
-                                // Properti translationX/Y/Z di dalam scope graphicsLayer dapat langsung diakses & diubah tanpa error
-                                val translationZ = (1f - pageOffset.coerceIn(0f, 1f)) * 10f
-                            }
-                            .shadow(
-                                elevation = shadowElevation.dp,
-                                shape = RoundedCornerShape(24.dp),
-                                clip = false
-                            )
-                    )
+                            .fillMaxWidth()
+                            .height(320.dp)
+                    ) { page ->
+                        val pageOffset = (
+                                (pagerState.currentPage - page) + pagerState.currentPageOffsetFraction
+                                ).absoluteValue
+
+                        val scale = lerp(
+                            start = 0.82f,
+                            stop = 1.0f,
+                            fraction = 1f - pageOffset.coerceIn(0f, 1f)
+                        )
+
+                        val alpha = lerp(
+                            start = 0.5f,
+                            stop = 1.0f,
+                            fraction = 1f - pageOffset.coerceIn(0f, 1f)
+                        )
+
+                        val shadowElevation = lerp(
+                            start = 0f,
+                            stop = 6f,
+                            fraction = 1f - pageOffset.coerceIn(0f, 1f)
+                        )
+
+                        BeasiswaCard(
+                            item = scholarshipList[page],
+                            modifier = Modifier
+                                .graphicsLayer {
+                                    scaleX = scale
+                                    scaleY = scale
+                                    this.alpha = alpha
+                                    // Memperbaiki properti kedalaman visual di GraphicsLayerScope
+                                    this.shadowElevation = shadowElevation
+                                }
+                                .shadow(
+                                    elevation = shadowElevation.dp,
+                                    shape = RoundedCornerShape(24.dp),
+                                    clip = false
+                                )
+                        )
+                    }
                 }
             }
         }
     }
 }
 
+// Card Beasiswa (Fokus Layout Mirip Mockup)
 @Composable
 fun BeasiswaCard(
     item: BeaItem,
     modifier: Modifier = Modifier
 ) {
     Column(
-        verticalArrangement = Arrangement.spacedBy(12.dp, Alignment.Top),
+        verticalArrangement = Arrangement.spacedBy(10.dp, Alignment.Top),
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = modifier
-            .width(210.dp)
-            .height(330.dp)
+            .width(215.dp)
+            .height(300.dp)
             .background(color = Color.White, shape = RoundedCornerShape(size = 24.dp))
-            .padding(12.dp)
+            .padding(10.dp)
     ) {
         Image(
             painter = painterResource(id = item.imageRes),
@@ -337,22 +381,24 @@ fun BeasiswaCard(
             contentScale = ContentScale.Crop,
             modifier = Modifier
                 .fillMaxWidth()
-                .height(180.dp)
-                .clip(RoundedCornerShape(18.dp))
+                .height(155.dp)
+                .clip(RoundedCornerShape(20.dp))
         )
 
         Column(
             verticalArrangement = Arrangement.spacedBy(4.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 4.dp)
         ) {
             Text(
                 text = item.title,
                 style = TextStyle(
-                    fontSize = 14.sp,
+                    fontSize = 13.sp,
                     fontFamily = FontFamily(Font(R.font.poppins_bold)),
                     fontWeight = FontWeight(700),
-                    color = Color(0xFF303030),
+                    color = Color(0xFF222222),
                     textAlign = TextAlign.Center,
                 ),
                 maxLines = 1,
@@ -362,10 +408,10 @@ fun BeasiswaCard(
             Text(
                 text = item.subtitle,
                 style = TextStyle(
-                    fontSize = 11.sp,
+                    fontSize = 10.sp,
                     fontFamily = FontFamily(Font(R.font.poppins_regular)),
                     fontWeight = FontWeight(400),
-                    color = Color(0xFF757575),
+                    color = Color(0xFF666666),
                     textAlign = TextAlign.Center,
                 ),
                 maxLines = 3,
@@ -379,37 +425,39 @@ fun BeasiswaCard(
 @Composable
 fun StreakItem(day: StreakDay) {
     val imageRes = if (day.isActive) R.drawable.fire_streak else R.drawable.fire_grey
-    val imageWidth = if (day.isActive) 47.4.dp else 34.4.dp
-    val imageHeight = if (day.isActive) 47.4.dp else 34.4.dp
+    val imageWidth = if (day.isActive) 44.dp else 34.dp
+    val imageHeight = if (day.isActive) 44.dp else 34.dp
 
     Column(
-        verticalArrangement = Arrangement.spacedBy(13.dp, Alignment.Top),
+        verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier
-            .width(47.4.dp)
-            .height(79.4.dp)
+            .width(46.dp)
+            .height(76.dp)
     ) {
-        Image(
-            painter = painterResource(id = imageRes),
-            contentDescription = "Streak status untuk ${day.dayName}",
-            contentScale = ContentScale.None,
-            modifier = Modifier
-                .padding(1.dp)
-                .width(imageWidth)
-                .height(imageHeight)
-        )
+        Box(
+            contentAlignment = Alignment.Center,
+            modifier = Modifier.size(46.dp)
+        ) {
+            Image(
+                painter = painterResource(id = imageRes),
+                contentDescription = "Streak status untuk ${day.dayName}",
+                contentScale = ContentScale.Fit,
+                modifier = Modifier
+                    .width(imageWidth)
+                    .height(imageHeight)
+            )
+        }
+        Spacer(modifier = Modifier.height(4.dp))
         Text(
             text = day.dayName,
             style = TextStyle(
-                fontSize = 16.sp,
-                fontFamily = FontFamily(Font(R.font.bubblegum_sans_regular)),
-                fontWeight = FontWeight(400),
-                color = Primary500,
+                fontSize = 14.sp,
+                fontFamily = FontFamily(Font(R.font.poppins_bold)),
+                fontWeight = FontWeight(700),
+                color = if (day.isActive) Primary500 else Color(0xFF9E9E9E),
                 textAlign = TextAlign.Center,
-            ),
-            modifier = Modifier
-                .width(23.dp)
-                .height(19.dp)
+            )
         )
     }
 }

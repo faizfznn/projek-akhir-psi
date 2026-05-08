@@ -1,12 +1,17 @@
 package com.kelompok2.scarla.ui.screens
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.MenuBook
@@ -17,6 +22,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -27,11 +33,19 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.Font
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import com.kelompok2.scarla.R
 
 private data class BottomTab(
     val title: String,
@@ -41,11 +55,11 @@ private data class BottomTab(
 )
 
 private val tabs = listOf(
-    BottomTab("Home", "home", Icons.Filled.Home),
-    BottomTab("Pesan", "pesan", Icons.Filled.Message, badgeCount = 7),
-    BottomTab("Cari", "cari", Icons.Filled.Search),
-    BottomTab("Belajar", "belajar", Icons.Filled.MenuBook),
-    BottomTab("Profil", "profil", Icons.Filled.Person)
+    BottomTab("HOME", "home", Icons.Filled.Home), // Menggunakan huruf kapital untuk judul aktif sesuai mockup
+    BottomTab("PESAN", "pesan", Icons.Filled.Message, badgeCount = 7),
+    BottomTab("CARI", "cari", Icons.Filled.Search),
+    BottomTab("BELAJAR", "belajar", Icons.Filled.MenuBook),
+    BottomTab("PROFIL", "profil", Icons.Filled.Person)
 )
 
 @Composable
@@ -55,42 +69,93 @@ fun MainScreen(navController: NavController? = null) {
 
     Scaffold(
         bottomBar = {
-            NavigationBar {
+            NavigationBar(
+                containerColor = Color(0xFFFFFEE0), // Warna kuning pucat sesuai mockup
+                tonalElevation = 0.dp, // Menghilangkan overlay warna gelap bawaan Material 3
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(84.dp)
+                    .shadow(
+                        elevation = 16.dp,
+                        shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp)
+                    )
+                    .background(
+                        color = Color(0xFFFFFEE0),
+                        shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp)
+                    )
+            ) {
                 tabs.forEachIndexed { index, tab ->
+                    val isSelected = selectedTab == index
+
                     NavigationBarItem(
-                        selected = selectedTab == index,
+                        selected = isSelected,
                         onClick = {
                             selectedTab = index
                             if (index != 4) showSettingsFromProfile = false
                         },
+                        colors = NavigationBarItemDefaults.colors(
+                            selectedIconColor = Color(0xFF2B2B2B),
+                            unselectedIconColor = Color(0xFF2B2B2B),
+                            selectedTextColor = Color(0xFF2B2B2B),
+                            unselectedTextColor = Color(0xFF2B2B2B),
+                            indicatorColor = Color.Transparent // Menghilangkan kapsul pil bawaan Material 3
+                        ),
                         icon = {
-                            Box {
-                                BottomNavIcon(
-                                    drawableName = tab.drawableName,
-                                    fallbackIcon = tab.fallbackIcon
-                                )
-                                if (tab.badgeCount > 0) {
-                                    Box(
-                                        modifier = Modifier
-                                            .align(Alignment.TopEnd)
-                                            .offset(x = 10.dp, y = (-4).dp)
-                                            .size(16.dp)
-                                            .background(
-                                                color = MaterialTheme.colorScheme.error,
-                                                shape = CircleShape
-                                            ),
-                                        contentAlignment = Alignment.Center
-                                    ) {
-                                        Text(
-                                            text = tab.badgeCount.toString(),
-                                            style = MaterialTheme.typography.labelSmall,
-                                            color = MaterialTheme.colorScheme.onError
-                                        )
+                            Box(
+                                contentAlignment = Alignment.Center,
+                                modifier = if (isSelected) {
+                                    // Efek lingkaran kuning untuk item aktif
+                                    Modifier
+                                        .size(42.dp)
+                                        .background(Color(0xFFFFD100), shape = CircleShape)
+                                } else {
+                                    Modifier.size(42.dp)
+                                }
+                            ) {
+                                Box {
+                                    BottomNavIcon(
+                                        drawableName = tab.drawableName,
+                                        fallbackIcon = tab.fallbackIcon,
+                                        modifier = Modifier.size(if (isSelected) 24.dp else 28.dp)
+                                    )
+                                    if (tab.badgeCount > 0) {
+                                        Box(
+                                            modifier = Modifier
+                                                .align(Alignment.TopEnd)
+                                                .offset(x = 10.dp, y = (-4).dp)
+                                                .size(16.dp)
+                                                .background(
+                                                    color = Color(0xFFFFD100), // Warna lencana mengikuti tema mockup
+                                                    shape = CircleShape
+                                                ),
+                                            contentAlignment = Alignment.Center
+                                        ) {
+                                            Text(
+                                                text = tab.badgeCount.toString(),
+                                                style = TextStyle(
+                                                    fontSize = 9.sp,
+                                                    fontWeight = FontWeight.Bold,
+                                                    color = Color.White
+                                                )
+                                            )
+                                        }
                                     }
                                 }
                             }
                         },
-                        label = { Text(text = tab.title) }
+                        label = {
+                            // Label teks hanya ditampilkan jika tab sedang aktif (sesuai gambar mockup)
+                            if (isSelected) {
+                                Text(
+                                    text = tab.title,
+                                    style = TextStyle(
+                                        fontSize = 11.sp,
+                                        fontFamily = FontFamily(Font(R.font.poppins_bold)),
+                                        fontWeight = FontWeight(700)
+                                    )
+                                )
+                            }
+                        }
                     )
                 }
             }
@@ -106,7 +171,6 @@ fun MainScreen(navController: NavController? = null) {
                 1 -> PesanScreen()
                 2 -> CariScreen()
                 3 -> {
-                    // Gunakan let untuk mengecek jika navController tidak null
                     navController?.let {
                         BelajarScreen(navController = it)
                     } ?: Text("Loading Navigation...", modifier = Modifier.align(Alignment.Center))
@@ -132,7 +196,8 @@ fun MainScreen(navController: NavController? = null) {
 @Composable
 private fun BottomNavIcon(
     drawableName: String,
-    fallbackIcon: ImageVector
+    fallbackIcon: ImageVector,
+    modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
     val iconRes = remember(drawableName) {
@@ -143,12 +208,13 @@ private fun BottomNavIcon(
         Icon(
             painter = painterResource(id = iconRes),
             contentDescription = drawableName,
-            modifier = Modifier.size(24.dp)
+            modifier = modifier
         )
     } else {
         Icon(
             imageVector = fallbackIcon,
-            contentDescription = drawableName
+            contentDescription = drawableName,
+            modifier = modifier
         )
     }
 }
