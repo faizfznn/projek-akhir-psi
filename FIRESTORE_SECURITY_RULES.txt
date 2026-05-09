@@ -1,0 +1,152 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // ============================================
+    // USER COLLECTIONS
+    // ============================================
+    
+    // User profiles - readable/writable by owner only
+    match /users/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+      
+      // Achievements sub-collection
+      match /achievements/{achievementId} {
+        allow read, write: if request.auth != null && request.auth.uid == userId;
+      }
+      
+      // Achievement notifications sub-collection
+      match /achievement_notifications/{notificationId} {
+        allow read, write: if request.auth != null && request.auth.uid == userId;
+      }
+      
+      // Daily activities sub-collection
+      match /activities/{activityId} {
+        allow read, write: if request.auth != null && request.auth.uid == userId;
+      }
+      
+      // Streak data sub-collection
+      match /streak/{streakDoc} {
+        allow read, write: if request.auth != null && request.auth.uid == userId;
+      }
+      
+      // Friends list sub-collection
+      match /friends/{friendId} {
+        allow read, write: if request.auth != null && request.auth.uid == userId;
+      }
+      
+      // Conversations sub-collection (optional)
+      match /conversations/{conversationId} {
+        allow read, write: if request.auth != null && request.auth.uid == userId;
+        
+        match /messages/{messageId} {
+          allow read, write: if request.auth != null && request.auth.uid == userId;
+        }
+      }
+    }
+    
+    // ============================================
+    // CONVERSATIONS (Root Collection)
+    // ============================================
+    
+    // Conversations - only participants can read/write
+    match /conversations/{conversationId} {
+      // Read access: if user is a participant
+      allow read: if request.auth != null && 
+                     request.auth.uid in resource.data.participantIds;
+      
+      // Write access: if user is a participant
+      allow write: if request.auth != null && 
+                      request.auth.uid in resource.data.participantIds;
+      
+      // Messages sub-collection
+      match /messages/{messageId} {
+        // Read: if user is a conversation participant
+        allow read: if request.auth != null && 
+                       request.auth.uid in get(/databases/$(database)/documents/conversations/$(conversationId)).data.participantIds;
+        
+        // Create: if sender is the authenticated user
+        allow create: if request.auth != null && 
+                         request.auth.uid == request.resource.data.senderId;
+        
+        // Update: only sender can update their own messages
+        allow update: if request.auth != null && 
+                         request.auth.uid == resource.data.senderId;
+        
+        // Delete: only sender can delete
+        allow delete: if request.auth != null && 
+                         request.auth.uid == resource.data.senderId;
+      }
+    }
+    
+    // ============================================
+    // FRIEND REQUESTS (Root Collection)
+    // ============================================
+    
+    match /friend_requests/{requestId} {
+      // Read: both sender and recipient can read
+      allow read: if request.auth != null && 
+                     request.auth.uid in [resource.data.senderId, resource.data.recipientId];
+      
+      // Create: authenticated user as sender
+      allow create: if request.auth != null && 
+                       request.auth.uid == request.resource.data.senderId;
+      
+      // Update: recipient can update (accept/reject)
+      allow update: if request.auth != null && 
+                       request.auth.uid == resource.data.recipientId;
+      
+      // Delete: either party can delete
+      allow delete: if request.auth != null && 
+                       request.auth.uid in [resource.data.senderId, resource.data.recipientId];
+    }
+    
+    // ============================================
+    // COMMUNITY ACTIVITIES (Root Collection)
+    // ============================================
+    
+    match /community_activities/{activityId} {
+      // Read: public read (anyone authenticated or not)
+      allow read: if true;
+      
+      // Create: authenticated user creates their own activity
+      allow create: if request.auth != null && 
+                       request.auth.uid == request.resource.data.userId;
+      
+      // Update: only creator can update
+      allow update: if request.auth != null && 
+                       request.auth.uid == resource.data.userId;
+      
+      // Delete: only creator can delete
+      allow delete: if request.auth != null && 
+                       request.auth.uid == resource.data.userId;
+      
+      // Comments sub-collection
+      match /comments/{commentId} {
+        // Read: public read
+        allow read: if true;
+        
+        // Create: authenticated user
+        allow create: if request.auth != null && 
+                         request.auth.uid == request.resource.data.userId;
+        
+        // Update: commenter can update
+        allow update: if request.auth != null && 
+                         request.auth.uid == resource.data.userId;
+        
+        // Delete: commenter can delete
+        allow delete: if request.auth != null && 
+                         request.auth.uid == resource.data.userId;
+      }
+    }
+    
+    // ============================================
+    // DENY ALL OTHER COLLECTIONS
+    // ============================================
+    
+    // Default: deny all other access
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

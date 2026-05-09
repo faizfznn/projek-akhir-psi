@@ -1,21 +1,26 @@
 package com.kelompok2.scarla.ui.screens
 
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
+// PesanScreen sekarang me-redirect ke ChatPage (chat list)
+// Dipanggil dari MainScreen bottom nav "Pesan"
+// Route asli: navigasikan ke Screen.Chat.route
 
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.navigation.NavController
+import com.kelompok2.scarla.navigation.Screen
+
+/**
+ * PesanScreen — wrapper sederhana yang langsung redirect ke ChatPage.
+ * Dipertahankan agar routing di MainScreen tidak perlu diubah.
+ */
 @Composable
-fun PesanScreen() {
-    Column(
-        modifier = Modifier.fillMaxSize(),
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Text(text = "Page Pesan", style = MaterialTheme.typography.headlineLarge)
+fun PesanScreen(navController: NavController? = null) {
+    LaunchedEffect(Unit) {
+        navController?.navigate(Screen.Chat.route)
+    }
+    // Jika dipanggil tanpa navController (misal di MainScreen bottom tab),
+    // tampilkan langsung ChatPage
+    if (navController == null) {
+        ChatPage()
     }
 }

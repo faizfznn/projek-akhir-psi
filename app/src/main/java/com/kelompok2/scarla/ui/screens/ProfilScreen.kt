@@ -887,8 +887,12 @@ private class ProfileReactiveRepository(
     private val firestore: FirebaseFirestore,
 ) {
     fun observeProfileState(uid: String, authEmail: String): Flow<ProfileUiState> {
-        return combine(observeUserDocument(uid), observeMaterialProgress(uid)) { userDoc, materials ->
-            userDoc.toProfileUiState(materials, authEmail)
+        return combine(
+            observeUserDocument(uid),
+            observeMaterialProgress(uid),
+            observeStreakData(uid)   // ← tambah stream streak langsung dari sub-koleksi
+        ) { userDoc, materials, streakFromFirestore ->
+            userDoc.toProfileUiState(materials, authEmail, streakFromFirestore)
         }
     }
 
@@ -970,11 +974,32 @@ private class ProfileReactiveRepository(
             }
         awaitClose { registration.remove() }
     }
+
+    // Observe sub-koleksi streaks/{uid} secara real-time
+    // Sumber data utama streak untuk ProfilScreen
+    private fun observeStreakData(uid: String): Flow<Int> = callbackFlow {
+        val streakRef = firestore.collection("users")
+            .document(uid)
+            .collection("streaks")
+            .document(uid)
+
+        val listener = streakRef.addSnapshotListener { snapshot, error ->
+            if (error != null) {
+                Log.w("ProfileReactiveRepository", "Failed to observe streak", error)
+                trySend(0)
+                return@addSnapshotListener
+            }
+            val current = (snapshot?.getLong("currentStreak") ?: 0L).toInt()
+            trySend(current)
+        }
+        awaitClose { listener.remove() }
+    }
 }
 
 private fun DocumentSnapshot?.toProfileUiState(
     materials: List<MaterialProgress>,
     authEmail: String,
+    streakFromFirestore: Int = 0,
 ): ProfileUiState {
     val doc = this
     val name = doc?.getString("name").orEmpty()
@@ -1002,7 +1027,12 @@ private fun DocumentSnapshot?.toProfileUiState(
 
     val streakFromDoc = (doc?.getLong("streakCount") ?: 0L).toInt()
     val streakFromMaterials = calculateStreak(materials.map { it.completedAtMillis })
-    val streak = if (materials.isNotEmpty()) streakFromMaterials else streakFromDoc
+    // Prioritas: streakFromFirestore (sub-koleksi) > streakFromMaterials > streakFromDoc
+    val streak = when {
+        streakFromFirestore > 0 -> streakFromFirestore
+        materials.isNotEmpty() -> streakFromMaterials
+        else -> streakFromDoc
+    }
 
     val achievements = buildAchievements(completedMaterials, streak)
 
