@@ -85,7 +85,6 @@ private fun CariFriendScreen(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(0xFFFFFAF0))
     ) {
         Column(modifier = Modifier.fillMaxSize()) {
             Text(

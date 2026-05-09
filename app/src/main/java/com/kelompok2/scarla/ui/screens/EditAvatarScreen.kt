@@ -98,8 +98,7 @@ fun EditAvatarScreen(
     if (isLoading) {
         Box(
             modifier = Modifier
-                .fillMaxSize()
-                .background(AuthBackground),
+                .fillMaxSize(),
             contentAlignment = Alignment.Center
         ) {
             CircularProgressIndicator(color = Secondary500)
@@ -110,7 +109,6 @@ fun EditAvatarScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(AuthBackground)
             .padding(bottom = 24.dp)
     ) {
         Spacer(modifier = Modifier.height(8.dp))

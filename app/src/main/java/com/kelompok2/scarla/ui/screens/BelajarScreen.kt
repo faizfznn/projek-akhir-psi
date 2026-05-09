@@ -87,7 +87,6 @@ fun BelajarScreen(navController: NavController) {
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(0xFFF5F5F5))
     ) {
 
         // HEADER
