@@ -57,6 +57,7 @@ sealed class Screen(val route: String) {
     object Mbti : Screen("mbti_screen")
     object Interests : Screen("interests_screen")
     object Streak : Screen("streak_screen")
+    object HtmlScreen : Screen("html_screen")
 }
 
 @Composable

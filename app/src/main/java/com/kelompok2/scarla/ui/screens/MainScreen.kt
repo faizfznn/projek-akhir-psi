@@ -167,7 +167,12 @@ fun MainScreen(navController: NavController? = null) {
                 .padding(innerPadding)
         ) {
             when (selectedTab) {
-                0 -> HomeScreen()
+                0 -> HomeScreen(
+                    navController = navController,
+                    onNavigateToHtml = {
+                        navController?.navigate("html_screen")
+                    }
+                )
                 1 -> PesanScreen()
                 2 -> CariScreen()
                 3 -> {
