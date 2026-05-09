@@ -28,6 +28,7 @@ import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.ui.draw.shadow
 import androidx.compose.material.icons.filled.LocalFireDepartment
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.AlertDialog
@@ -124,6 +125,7 @@ private data class AchievementUi(
     val subtitle: String,
     val current: Int,
     val target: Int,
+    val imageRes: Int = 0,
 )
 
 private data class MaterialProgress(
@@ -293,7 +295,11 @@ fun ProfilScreen(
                 AchievementSection(
                     achievements = uiState.achievements,
                     showAll = showAllAchievements,
-                    onToggleShowAll = { showAllAchievements = !showAllAchievements }
+                    onToggleShowAll = { 
+                        if (navController != null) {
+                            navController.navigate(com.kelompok2.scarla.navigation.Screen.Achievement.route)
+                        }
+                    }
                 )
             }
         }
@@ -451,7 +457,7 @@ private fun AchievementSection(
     showAll: Boolean,
     onToggleShowAll: () -> Unit,
 ) {
-    val visibleItems = if (showAll) achievements else achievements.take(3)
+    val visibleItems = achievements.take(2)
 
     Column(
         modifier = Modifier
@@ -467,9 +473,9 @@ private fun AchievementSection(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(text = "Achievement", style = PoppinsRegularSemibold, color = Neutral900)
-            if (achievements.size > 3) {
+            if (achievements.isNotEmpty()) {
                 Text(
-                    text = if (showAll) "Sembunyikan" else "Lihat Semua",
+                    text = "Lihat Semua",
                     style = PoppinsTinyRegular,
                     color = Secondary500,
                     modifier = Modifier.clickable(onClick = onToggleShowAll)
@@ -484,32 +490,69 @@ private fun AchievementSection(
 
         visibleItems.forEach { achievement ->
             val boundedCurrent = achievement.current.coerceAtMost(achievement.target)
-            Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text(text = achievement.title, style = PoppinsRegularSemibold, color = Neutral900)
-                        Text(text = achievement.subtitle, style = PoppinsTinyRegular, color = Neutral600)
-                    }
-                    Spacer(modifier = Modifier.width(10.dp))
-                    Text(
-                        text = "$boundedCurrent/${achievement.target}",
-                        style = PoppinsTinyRegular,
-                        color = Neutral700
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .shadow(elevation = 4.dp, spotColor = Color(0x26000000), ambientColor = Color(0x26000000), shape = RoundedCornerShape(12.dp))
+                    .background(color = Color.White, shape = RoundedCornerShape(12.dp))
+                    .padding(10.dp)
+            ) {
+                if (achievement.imageRes != 0) {
+                    Icon(
+                        painter = painterResource(achievement.imageRes),
+                        contentDescription = achievement.title,
+                        modifier = Modifier
+                            .size(60.dp)
+                            .clip(RoundedCornerShape(10.dp)),
+                        tint = Color.Unspecified
                     )
                 }
-                LinearProgressIndicator(
-                    progress = {
-                        if (achievement.target <= 0) 0f
-                        else boundedCurrent.toFloat() / achievement.target.toFloat()
-                    },
-                    modifier = Modifier.fillMaxWidth(),
-                    color = Secondary500,
-                    trackColor = Neutral300
-                )
+
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(6.dp),
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Text(
+                        text = achievement.title,
+                        style = PoppinsRegularSemibold,
+                        color = Neutral900,
+                        maxLines = 1,
+                        overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+                    )
+                    Text(
+                        text = achievement.subtitle,
+                        style = PoppinsTinyRegular,
+                        color = Neutral600,
+                        maxLines = 1,
+                        overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+                    )
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .height(4.dp)
+                                .weight(1f)
+                                .background(color = Color(0xFFE0E0E0), shape = RoundedCornerShape(2.dp))
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth(boundedCurrent.toFloat() / achievement.target.toFloat())
+                                    .height(4.dp)
+                                    .background(color = Secondary500, shape = RoundedCornerShape(2.dp))
+                            )
+                        }
+                        Text(
+                            text = "$boundedCurrent/${achievement.target}",
+                            style = PoppinsTinyRegular,
+                            color = Neutral700
+                        )
+                    }
+                }
             }
         }
     }
@@ -991,33 +1034,45 @@ private fun buildAchievements(materialCount: Int, streak: Int): List<Achievement
     return listOf(
         AchievementUi(
             title = "Perjalanan Pemula",
-            subtitle = "Selesaikan 1 materi pertama",
+            subtitle = "Selesaikan pelajaran pertama",
             current = materialCount,
-            target = 1
+            target = 1,
+            imageRes = com.kelompok2.scarla.R.drawable.achievement_1
         ),
         AchievementUi(
-            title = "Rajin Belajar",
-            subtitle = "Selesaikan 5 materi",
-            current = materialCount,
-            target = 5
-        ),
-        AchievementUi(
-            title = "Konsisten 3 Hari",
-            subtitle = "Pertahankan streak 3 hari",
+            title = "Bola Api",
+            subtitle = "Streak selama 3 hari",
             current = streak,
-            target = 3
+            target = 3,
+            imageRes = com.kelompok2.scarla.R.drawable.achievement_2
         ),
         AchievementUi(
-            title = "Konsisten 7 Hari",
-            subtitle = "Pertahankan streak 7 hari",
+            title = "Kembang Api",
+            subtitle = "Streak selama 14 hari",
             current = streak,
-            target = 7
+            target = 14,
+            imageRes = com.kelompok2.scarla.R.drawable.achievement_3
         ),
         AchievementUi(
-            title = "Explorer Materi",
-            subtitle = "Selesaikan 10 materi",
+            title = "Komet",
+            subtitle = "Streak selama 30 hari",
+            current = streak,
+            target = 30,
+            imageRes = com.kelompok2.scarla.R.drawable.achievement_4
+        ),
+        AchievementUi(
+            title = "Meteor",
+            subtitle = "Streak selama 2 bulan",
+            current = streak,
+            target = 60,
+            imageRes = com.kelompok2.scarla.R.drawable.achievement_5
+        ),
+        AchievementUi(
+            title = "Si Paling Ambis",
+            subtitle = "Menyelesaikan 10 pelajaran",
             current = materialCount,
-            target = 10
+            target = 10,
+            imageRes = com.kelompok2.scarla.R.drawable.achievement_6
         )
     )
 }

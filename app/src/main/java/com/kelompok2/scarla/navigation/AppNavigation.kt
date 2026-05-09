@@ -14,6 +14,7 @@ import androidx.navigation.compose.rememberNavController
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
+import com.kelompok2.scarla.ui.screens.AchievementPage
 import com.kelompok2.scarla.ui.screens.AuthChoiceScreen
 import com.kelompok2.scarla.ui.screens.BelajarScreen
 import com.kelompok2.scarla.ui.screens.EducationLevelScreen
@@ -21,6 +22,7 @@ import com.kelompok2.scarla.ui.screens.EditAvatarScreen
 import com.kelompok2.scarla.ui.screens.EditInterestsScreen
 import com.kelompok2.scarla.ui.screens.EditMbtiScreen
 import com.kelompok2.scarla.ui.screens.EditProfileScreen
+import com.kelompok2.scarla.ui.screens.FriendRequestsScreen
 import com.kelompok2.scarla.ui.screens.InformatikaScreen
 import com.kelompok2.scarla.ui.screens.InterestsScreen
 import com.kelompok2.scarla.ui.screens.LoginScreen
@@ -58,6 +60,8 @@ sealed class Screen(val route: String) {
     object Interests : Screen("interests_screen")
     object Streak : Screen("streak_screen")
     object HtmlScreen : Screen("html_screen")
+    object Achievement : Screen("achievement_screen")
+    object FriendRequests : Screen("friend_requests_screen")
 }
 
 @Composable
@@ -271,6 +275,14 @@ fun AppNavigation() {
 
         composable("quiz_html") {
             QuizHtmlScreen(navController = navController)
+        }
+
+        composable(Screen.Achievement.route) {
+            AchievementPage(navController = navController)
+        }
+
+        composable(Screen.FriendRequests.route) {
+            FriendRequestsScreen(navController = navController)
         }
 
     }

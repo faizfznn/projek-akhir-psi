@@ -32,6 +32,6 @@ fun FriendSearchBar(
                 contentDescription = "Search friend"
             )
         },
-        placeholder = { Text("Cari teman") }
+        placeholder = { Text("Cari teman lewat username") }
     )
 }

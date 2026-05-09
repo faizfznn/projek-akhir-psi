@@ -174,7 +174,7 @@ fun MainScreen(navController: NavController? = null) {
                     }
                 )
                 1 -> PesanScreen()
-                2 -> CariScreen()
+                2 -> CariScreen(navController = navController)
                 3 -> {
                     navController?.let {
                         BelajarScreen(navController = it)
