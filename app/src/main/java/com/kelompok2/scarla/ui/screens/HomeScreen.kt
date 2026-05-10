@@ -32,6 +32,8 @@ import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -50,12 +52,16 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import com.google.firebase.auth.FirebaseAuth
 import com.kelompok2.scarla.R
 import com.kelompok2.scarla.ui.theme.*
 import kotlin.math.absoluteValue
 import com.kelompok2.scarla.ui.components.AppButton
 import com.kelompok2.scarla.ui.components.ButtonType
+import com.kelompok2.scarla.ui.viewmodel.StreakViewModel
  
  
 // --- DATA MODELS ---
@@ -81,21 +87,23 @@ data class StudyModule(
 @Composable
 fun HomeScreen(
     navController: NavController? = null,
-    onNavigateToHtml: () -> Unit = {}
+    onNavigateToHtml: () -> Unit = {},
+    streakViewModel: StreakViewModel = viewModel()   // REAKTIF: inject ViewModel
 ) {
     val scrollState = rememberScrollState()
     val context = LocalContext.current
 
+    // REAKTIF: streakState diperbarui otomatis dari Firestore snapshot listener
+    val streakState by streakViewModel.streakState.collectAsStateWithLifecycle()
 
-    val streakDays = listOf(
-        StreakDay("Sen", true),
-        StreakDay("Sel", false),
-        StreakDay("Rab", false),
-        StreakDay("Kam", false),
-        StreakDay("Jum", false),
-        StreakDay("Sab", false),
-        StreakDay("Min", false)
-    )
+    // Nama user dari FirebaseAuth (reactif saat login)
+    val userName = remember { FirebaseAuth.getInstance().currentUser?.displayName ?: "Pengguna" }
+
+    // weeklyDays dari Firestore (bukan hardcoded)
+    val dayLabels = listOf("Sen", "Sel", "Rab", "Kam", "Jum", "Sab", "Min")
+    val streakDays = dayLabels.mapIndexed { index, label ->
+        StreakDay(label, streakState.weeklyDays.getOrElse(index) { false })
+    }
 
     val studyModules = listOf(
         StudyModule("Belajar Dasar HTML", R.drawable.ic_html, "html_screen"),
@@ -178,7 +186,8 @@ fun HomeScreen(
                     .padding(horizontal = 20.dp)
                 ) {
                     Text(
-                        text = "Hello, Ahmad",
+                        // REAKTIF: nama dari Firebase Auth
+                        text = "Hello, $userName",
                         style = TextStyle(
                             fontSize = 24.sp,
                             fontFamily = FontFamily(Font(R.font.poppins_bold)),

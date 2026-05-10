@@ -30,6 +30,8 @@ import com.kelompok2.scarla.ui.theme.Neutral100
 import com.kelompok2.scarla.ui.theme.Neutral700
 import com.kelompok2.scarla.ui.theme.Neutral800
 import com.kelompok2.scarla.ui.theme.Primary500
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.runtime.remember
 
 @Composable
 fun FriendCard(
@@ -57,8 +59,16 @@ fun FriendCard(
                 horizontalArrangement = Arrangement.spacedBy(16.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
+                val context = LocalContext.current
+                val avatarRes = remember(profile.avatarString, profile.avatarResId) {
+                    if (profile.avatarString.isNotBlank()) {
+                        val resId = context.resources.getIdentifier(profile.avatarString, "drawable", context.packageName)
+                        if (resId != 0) resId else profile.avatarResId
+                    } else profile.avatarResId
+                }
+
                 Image(
-                    painter = painterResource(id = profile.avatarResId),
+                    painter = painterResource(id = if (avatarRes != 0) avatarRes else com.kelompok2.scarla.R.drawable.avatar_default),
                     contentDescription = profile.name,
                     contentScale = ContentScale.Crop,
                     modifier = Modifier

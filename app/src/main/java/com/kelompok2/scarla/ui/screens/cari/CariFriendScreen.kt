@@ -40,7 +40,13 @@ fun CariFriendRoute(
         navController = navController,
         uiState = uiState,
         onSearchQueryChange = viewModel::onSearchQueryChange,
-        onSearchCardClick = viewModel::openFriendRequestPopup,
+        onSearchCardClick = { friend ->
+            if (friend.isFriend) {
+                navController?.navigate(Screen.ChatRoom.createRoute(friend.id, friend.name))
+            } else {
+                viewModel.openFriendRequestPopup(friend)
+            }
+        },
         onRequestMessageChange = viewModel::onRequestMessageChange,
         onDismissRequestPopup = viewModel::dismissRequestPopup,
         onSubmitRequest = viewModel::submitFriendRequest,

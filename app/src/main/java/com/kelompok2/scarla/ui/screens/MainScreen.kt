@@ -26,9 +26,11 @@ import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -45,7 +47,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import com.google.firebase.auth.FirebaseAuth
 import com.kelompok2.scarla.R
+import com.kelompok2.scarla.firebase.FirestoreInitializer
+import kotlinx.coroutines.launch
 
 private data class BottomTab(
     val title: String,
@@ -66,6 +71,20 @@ private val tabs = listOf(
 fun MainScreen(navController: NavController? = null) {
     var selectedTab by rememberSaveable { mutableStateOf(0) }
     var showSettingsFromProfile by rememberSaveable { mutableStateOf(false) }
+    val scope = rememberCoroutineScope()
+
+    // ── INISIALISASI OTOMATIS ────────────────────────────────────────────
+    // Dipanggil sekali saat MainScreen pertama kali tampil.
+    // Memastikan sub-koleksi streaks & achievements ada untuk user ini,
+    // baik user baru maupun user lama yang belum ter-inisialisasi.
+    LaunchedEffect(Unit) {
+        val uid = FirebaseAuth.getInstance().currentUser?.uid
+        if (uid != null) {
+            scope.launch {
+                FirestoreInitializer.ensureUserInitialized(uid)
+            }
+        }
+    }
 
     Scaffold(
         bottomBar = {
@@ -173,7 +192,7 @@ fun MainScreen(navController: NavController? = null) {
                         navController?.navigate("html_screen")
                     }
                 )
-                1 -> PesanScreen()
+                1 -> ChatPage(navController = navController)
                 2 -> CariScreen(navController = navController)
                 3 -> {
                     navController?.let {
