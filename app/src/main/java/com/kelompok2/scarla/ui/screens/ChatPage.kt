@@ -205,6 +205,7 @@ fun ChatRoomPage(
     ) {
         // ── App Bar ──────────────────────────────────────────────────────
         ChatRoomHeader(
+            isOnline = uiState.activePeerIsOnline,
             peerName = uiState.activePeerName.ifBlank { peerName },
             peerAvatar = uiState.activePeerAvatar.ifBlank { peerAvatar },
             onBack = {
@@ -265,6 +266,7 @@ fun ChatRoomPage(
 
 @Composable
 private fun ChatRoomHeader(
+    isOnline: Boolean,
     peerName: String,
     peerAvatar: String,
     onBack: () -> Unit
@@ -325,20 +327,31 @@ private fun ChatRoomHeader(
                 text = peerName.ifBlank { "Pengguna" },
                 style = TextStyle(
                     fontSize = 15.sp,
-                    fontFamily = FontFamily(Font(R.font.poppins_bold)),
+                      fontFamily = FontFamily(Font(R.font.poppins_bold)),
                     fontWeight = FontWeight(600),
                     color = Neutral900
                 )
             )
             // Indikator online — bisa dikembangkan nanti
-            Text(
-                text = "Aktif",
-                style = TextStyle(
-                    fontSize = 11.sp,
-                    fontFamily = FontFamily(Font(R.font.poppins_regular)),
-                    color = Color(0xFF4CAF50)
+            if(isOnline){
+                Text(
+                    text = "Aktif",
+                    style = TextStyle(
+                        fontSize = 11.sp,
+                        fontFamily = FontFamily(Font(R.font.poppins_regular)),
+                        color = Color(0xFF4CAF50)
+                    )
                 )
-            )
+            }else{
+                Text(
+                    text = "Tidak Aktif",
+                    style = TextStyle(
+                        fontSize = 11.sp,
+                        fontFamily = FontFamily(Font(R.font.poppins_regular)),
+                        color = Neutral600 // Abu-abu
+                    )
+                )
+            }
         }
     }
 }
