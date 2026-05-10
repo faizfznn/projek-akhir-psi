@@ -65,6 +65,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.google.firebase.auth.FirebaseAuth
 import com.kelompok2.scarla.R
+import com.kelompok2.scarla.navigation.Screen
 import com.kelompok2.scarla.ui.theme.Neutral300
 import com.kelompok2.scarla.ui.theme.Neutral600
 import com.kelompok2.scarla.ui.theme.Neutral700
@@ -154,7 +155,7 @@ fun ChatPage(
                                 peerName = contact.name,
                                 peerAvatar = contact.avatarUrl
                             )
-                            navController?.navigate("chat_room/${contact.uid}/${contact.name}")
+                            navController?.navigate(Screen.ChatRoom.createRoute(contact.uid, contact.name))
                         }
                     )
                 }
@@ -205,12 +206,15 @@ fun ChatRoomPage(
     ) {
         // ── App Bar ──────────────────────────────────────────────────────
         ChatRoomHeader(
-            isOnline = uiState.activePeerIsOnline,
             peerName = uiState.activePeerName.ifBlank { peerName },
             peerAvatar = uiState.activePeerAvatar.ifBlank { peerAvatar },
+            isOnline = uiState.activePeerIsOnline,
             onBack = {
                 viewModel.closeChat()
                 navController?.popBackStack()
+            },
+            onProfileClick = {
+                navController?.navigate(com.kelompok2.scarla.navigation.Screen.PeerProfile.createRoute(peerUid))
             }
         )
 
@@ -266,10 +270,11 @@ fun ChatRoomPage(
 
 @Composable
 private fun ChatRoomHeader(
-    isOnline: Boolean,
     peerName: String,
     peerAvatar: String,
-    onBack: () -> Unit
+    isOnline: Boolean,
+    onBack: () -> Unit,
+    onProfileClick: () -> Unit
 ) {
     val context = LocalContext.current
     val avatarRes = remember(peerAvatar) {
@@ -295,62 +300,70 @@ private fun ChatRoomHeader(
             )
         }
 
-        // Avatar
-        Box(
+        Row(
             modifier = Modifier
-                .size(40.dp)
-                .clip(CircleShape)
-                .background(Primary500)
-                .border(1.dp, Neutral300, CircleShape),
-            contentAlignment = Alignment.Center
+                .weight(1f)
+                .clickable { onProfileClick() }
+                .padding(vertical = 4.dp, horizontal = 4.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(10.dp)
         ) {
-            if (avatarRes != 0) {
-                androidx.compose.foundation.Image(
-                    painter = painterResource(avatarRes),
-                    contentDescription = peerName,
-                    modifier = Modifier.size(36.dp)
-                )
-            } else {
+            // Avatar
+            Box(
+                modifier = Modifier
+                    .size(40.dp)
+                    .clip(CircleShape)
+                    .background(Primary500)
+                    .border(1.dp, Neutral300, CircleShape),
+                contentAlignment = Alignment.Center
+            ) {
+                if (avatarRes != 0) {
+                    androidx.compose.foundation.Image(
+                        painter = painterResource(avatarRes),
+                        contentDescription = peerName,
+                        modifier = Modifier.size(36.dp)
+                    )
+                } else {
+                    Text(
+                        text = peerName.firstOrNull()?.uppercase() ?: "?",
+                        style = TextStyle(
+                            fontSize = 16.sp,
+                            fontFamily = FontFamily(Font(R.font.poppins_bold)),
+                            color = Neutral900
+                        )
+                    )
+                }
+            }
+
+            Column {
                 Text(
-                    text = peerName.firstOrNull()?.uppercase() ?: "?",
+                    text = peerName.ifBlank { "Pengguna" },
                     style = TextStyle(
-                        fontSize = 16.sp,
+                        fontSize = 15.sp,
                         fontFamily = FontFamily(Font(R.font.poppins_bold)),
+                        fontWeight = FontWeight(600),
                         color = Neutral900
                     )
                 )
-            }
-        }
-
-        Column {
-            Text(
-                text = peerName.ifBlank { "Pengguna" },
-                style = TextStyle(
-                    fontSize = 15.sp,
-                      fontFamily = FontFamily(Font(R.font.poppins_bold)),
-                    fontWeight = FontWeight(600),
-                    color = Neutral900
-                )
-            )
-            // Indikator online — bisa dikembangkan nanti
-            if(isOnline){
-                Text(
-                    text = "Aktif",
-                    style = TextStyle(
-                        fontSize = 11.sp,
-                        fontFamily = FontFamily(Font(R.font.poppins_regular)),
-                        color = Color(0xFF4CAF50)
+                if (isOnline) {
+                    Text(
+                        text = "Aktif",
+                        style = TextStyle(
+                            fontSize = 11.sp,
+                            fontFamily = FontFamily(Font(R.font.poppins_regular)),
+                            color = Color(0xFF4CAF50) // Hijau
+                        )
                     )
-                )
-            }else{
-                Text(
-                    text = "Tidak Aktif",
-                    style = TextStyle(
-                        fontSize = 11.sp,
-                        fontFamily = FontFamily(Font(R.font.poppins_regular)),
-                        color = Neutral600 // Abu-abu
+                } else {
+                    Text(
+                        text = "Tidak Aktif",
+                        style = TextStyle(
+                            fontSize = 11.sp,
+                            fontFamily = FontFamily(Font(R.font.poppins_regular)),
+                            color = Neutral600 // Abu-abu
+                        )
                     )
-                )
+                }
             }
         }
     }

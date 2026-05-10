@@ -175,7 +175,7 @@ fun LoginScreen(
                             } else {
                                 errorMessage = task.exception?.localizedMessage
                                     ?: "Login gagal. Periksa email dan kata sandi."
-                            }
+                            }  
                         }
                 }
             )
@@ -201,7 +201,7 @@ fun LoginScreen(
                             } else {
                                 errorMessage = task.exception?.localizedMessage
                                     ?: "Login gagal. Periksa email dan kata sandi."
-                            }
+                            }  
                         }
                 }
             )

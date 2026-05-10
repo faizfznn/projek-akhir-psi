@@ -83,11 +83,11 @@ class CariViewModel(
                 fetchJob = viewModelScope.launch(Dispatchers.IO) {
                     val requests = snapshot?.documents ?: emptyList()
                     val profiles = mutableListOf<FriendProfile>()
-
+                    
                     for (doc in requests) {
                         val fromUid = doc.getString("fromUid") ?: continue
                         val requestId = doc.id
-
+                        
                         try {
                             val userSnap = db.collection("users").document(fromUid).get().await()
                             if (userSnap.exists()) {
@@ -138,7 +138,7 @@ class CariViewModel(
 
     fun onSearchQueryChange(query: String) {
         val normalizedQuery = query.trim()
-
+        
         if (normalizedQuery.isBlank()) {
             _uiState.update {
                 it.copy(
@@ -153,7 +153,7 @@ class CariViewModel(
         }
 
         val currentUid = auth.currentUser?.uid ?: return
-
+        
         _uiState.update { it.copy(searchQuery = normalizedQuery) }
 
         viewModelScope.launch(Dispatchers.IO) {
@@ -164,22 +164,22 @@ class CariViewModel(
 
                 // 2. Fetch all users and filter locally
                 val usersSnap = db.collection("users").get().await()
-
+                
                 val results = usersSnap.documents.mapNotNull { doc ->
                     if (doc.id == currentUid) return@mapNotNull null // jangan munculkan diri sendiri
-
+                    
                     val name = doc.getString("name") ?: ""
                     val email = doc.getString("email") ?: ""
-
-                    if (name.contains(normalizedQuery, ignoreCase = true) ||
+                    
+                    if (name.contains(normalizedQuery, ignoreCase = true) || 
                         email.contains(normalizedQuery, ignoreCase = true)) {
-
+                        
                         val age = calculateAge(doc.getTimestamp("birthDate")) ?: 20
                         val origin = doc.getString("city") ?: ""
                         val education = doc.getString("educationStatus") ?: ""
                         val avatarStr = doc.getString("avatar") ?: "avatar_default"
                         val interests = (doc.get("favoriteSubjects") as? List<*>)?.map { it.toString() } ?: emptyList()
-
+                        
                         FriendProfile(
                             id = doc.id, // target UID untuk di-add
                             name = name,
@@ -214,11 +214,11 @@ class CariViewModel(
         val currentRequest = _uiState.value.friendRequests.first()
         viewModelScope.launch(dispatcher) {
             _uiState.update { it.copy(swipeDirection = CardSwipeDirection.RIGHT) }
-
+            
             // Tunggu animasi swipe selesai sebelum menghapus card dari UI
             delay(CARD_ANIMATION_DURATION_MS)
 
-            _uiState.update { state ->
+            _uiState.update { state -> 
                 state.copy(
                     friendRequests = state.friendRequests.filterNot { it.id == currentRequest.id },
                     swipeDirection = null,
@@ -238,11 +238,11 @@ class CariViewModel(
         val currentRequest = _uiState.value.friendRequests.first()
         viewModelScope.launch(dispatcher) {
             _uiState.update { it.copy(swipeDirection = CardSwipeDirection.LEFT) }
-
+            
             // Tunggu animasi swipe selesai
             delay(CARD_ANIMATION_DURATION_MS)
 
-            _uiState.update { state ->
+            _uiState.update { state -> 
                 state.copy(
                     friendRequests = state.friendRequests.filterNot { it.id == currentRequest.id },
                     swipeDirection = null
@@ -287,7 +287,7 @@ class CariViewModel(
     fun submitFriendRequest() {
         val selectedFriend = _uiState.value.selectedFriend ?: return
         val message = _uiState.value.requestMessage
-
+        
         viewModelScope.launch(Dispatchers.IO) {
             FirestoreInitializer.sendFriendRequest(selectedFriend.id, message)
         }

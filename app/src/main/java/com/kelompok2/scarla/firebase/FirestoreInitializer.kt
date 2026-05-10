@@ -614,9 +614,27 @@ object FirestoreInitializer {
             val chatId = buildChatId(fromUid, toUid)
             val chatRef = db.collection("messages").document(chatId)
 
-            // Pastikan dokumen chat root ada
+            // Ambil data user dari server untuk metadata chat
+            val fromSnap = db.collection("users").document(fromUid).get().await()
+            val toSnap = db.collection("users").document(toUid).get().await()
+
+            val fromName = fromSnap.getString("name") ?: ""
+            val fromAvatar = fromSnap.getString("avatarUrl") ?: fromSnap.getString("avatar") ?: ""
+            
+            val toName = toSnap.getString("name") ?: ""
+            val toAvatar = toSnap.getString("avatarUrl") ?: toSnap.getString("avatar") ?: ""
+
+            // Pastikan dokumen chat root ada dan update info terakhir
             chatRef.set(
-                mapOf("participants" to listOf(fromUid, toUid)),
+                mapOf(
+                    "participants" to listOf(fromUid, toUid),
+                    "lastMessage" to text,
+                    "lastMessageAt" to FieldValue.serverTimestamp(),
+                    "peerName_$fromUid" to fromName,
+                    "peerAvatar_$fromUid" to fromAvatar,
+                    "peerName_$toUid" to toName,
+                    "peerAvatar_$toUid" to toAvatar
+                ),
                 SetOptions.merge()
             ).await()
 

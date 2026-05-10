@@ -216,7 +216,7 @@ fun ProfilScreen(
                 Spacer(modifier = Modifier.width(8.dp))
             }
             Text(text = "Profile", style = MaterialTheme.typography.titleLarge, color = Neutral900)
-
+            
             if (isMyProfile) {
                 IconButton(
                     onClick = {
@@ -247,7 +247,7 @@ fun ProfilScreen(
             else -> {
                 ProfileIdentityCard(
                     uiState = uiState,
-                    onEdit = if (isMyProfile && navController != null) {
+                    onEdit = if (isMyProfile && navController != null) { 
                         { navController.navigate(com.kelompok2.scarla.navigation.Screen.EditProfile.route) }
                     } else null
                 )
@@ -317,7 +317,7 @@ fun ProfilScreen(
                     achievements = displayAchievements,
                     showAll = showAllAchievements,
                     isMyProfile = isMyProfile,
-                    onToggleShowAll = {
+                    onToggleShowAll = { 
                         if (navController != null && isMyProfile) {
                             navController.navigate(com.kelompok2.scarla.navigation.Screen.Achievement.route)
                         }
@@ -1138,8 +1138,8 @@ private fun calculateAge(birthDate: Timestamp?): Int? {
     val birth = Calendar.getInstance().apply { time = date }
     var age = now.get(Calendar.YEAR) - birth.get(Calendar.YEAR)
     val hasBirthdayPassed = now.get(Calendar.MONTH) > birth.get(Calendar.MONTH) ||
-            (now.get(Calendar.MONTH) == birth.get(Calendar.MONTH) &&
-                    now.get(Calendar.DAY_OF_MONTH) >= birth.get(Calendar.DAY_OF_MONTH))
+        (now.get(Calendar.MONTH) == birth.get(Calendar.MONTH) &&
+            now.get(Calendar.DAY_OF_MONTH) >= birth.get(Calendar.DAY_OF_MONTH))
     if (!hasBirthdayPassed) {
         age -= 1
     }
