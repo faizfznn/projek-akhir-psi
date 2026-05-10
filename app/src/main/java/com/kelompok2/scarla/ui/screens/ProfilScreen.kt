@@ -23,6 +23,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.MenuBook
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.Check
@@ -162,31 +163,34 @@ private const val MILLIS_PER_DAY = 86_400_000L
 fun ProfilScreen(
     navController: NavController? = null,
     onOpenSettings: (() -> Unit)? = null,
+    peerUid: String? = null
 ) {
     val auth = remember { FirebaseAuth.getInstance() }
     val firestore = remember { FirebaseFirestore.getInstance() }
     val repository = remember { ProfileReactiveRepository(firestore) }
     val scope = rememberCoroutineScope()
-    val uid = auth.currentUser?.uid
+    val myUid = auth.currentUser?.uid
+    val targetUid = peerUid ?: myUid
+    val isMyProfile = targetUid == myUid
 
-    val profileFlow = remember(uid) {
-        if (uid.isNullOrBlank()) {
+    val profileFlow = remember(targetUid) {
+        if (targetUid.isNullOrBlank()) {
             kotlinx.coroutines.flow.flowOf(
                 ProfileUiState(
                     isLoading = false,
-                    email = auth.currentUser?.email.orEmpty(),
-                    errorMessage = "Silakan login ulang untuk melihat profil"
+                    email = if (isMyProfile) auth.currentUser?.email.orEmpty() else "",
+                    errorMessage = if (isMyProfile) "Silakan login ulang untuk melihat profil" else "Pengguna tidak ditemukan"
                 )
             )
         } else {
-            repository.observeProfileState(uid, auth.currentUser?.email.orEmpty())
+            repository.observeProfileState(targetUid, if (isMyProfile) auth.currentUser?.email.orEmpty() else "")
         }
     }
 
     val uiState by profileFlow.collectAsState(
         initial = ProfileUiState(
-            isLoading = uid != null,
-            email = auth.currentUser?.email.orEmpty()
+            isLoading = targetUid != null,
+            email = if (isMyProfile) auth.currentUser?.email.orEmpty() else ""
         )
     )
 
@@ -202,21 +206,30 @@ fun ProfilScreen(
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
+            horizontalArrangement = if (isMyProfile) Arrangement.SpaceBetween else Arrangement.Start,
             verticalAlignment = Alignment.CenterVertically
         ) {
+            if (!isMyProfile) {
+                IconButton(onClick = { navController?.popBackStack() }) {
+                    Icon(imageVector = Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Kembali")
+                }
+                Spacer(modifier = Modifier.width(8.dp))
+            }
             Text(text = "Profile", style = MaterialTheme.typography.titleLarge, color = Neutral900)
-            IconButton(
-                onClick = {
-                    if (onOpenSettings != null) {
-                        onOpenSettings()
-                    } else if (navController != null) {
-                        navController.navigate(com.kelompok2.scarla.navigation.Screen.Settings.route)
-                    }
-                },
-                modifier = Modifier.size(40.dp)
-            ) {
-                Icon(imageVector = Icons.Default.Settings, contentDescription = "Pengaturan", tint = Neutral800)
+
+            if (isMyProfile) {
+                IconButton(
+                    onClick = {
+                        if (onOpenSettings != null) {
+                            onOpenSettings()
+                        } else if (navController != null) {
+                            navController.navigate(com.kelompok2.scarla.navigation.Screen.Settings.route)
+                        }
+                    },
+                    modifier = Modifier.size(40.dp)
+                ) {
+                    Icon(imageVector = Icons.Default.Settings, contentDescription = "Pengaturan", tint = Neutral800)
+                }
             }
         }
 
@@ -234,7 +247,9 @@ fun ProfilScreen(
             else -> {
                 ProfileIdentityCard(
                     uiState = uiState,
-                    onEdit = { if (!uid.isNullOrBlank() && navController != null) navController.navigate(com.kelompok2.scarla.navigation.Screen.EditProfile.route) }
+                    onEdit = if (isMyProfile && navController != null) {
+                        { navController.navigate(com.kelompok2.scarla.navigation.Screen.EditProfile.route) }
+                    } else null
                 )
 
                 Row(
@@ -259,8 +274,8 @@ fun ProfilScreen(
 
                 ProfileSection(
                     title = "Pelajaran Favorit",
-                    trailingAction = { if (!uid.isNullOrBlank() && navController != null) navController.navigate(com.kelompok2.scarla.navigation.Screen.EditInterests.route) },
-                    showEdit = !uid.isNullOrBlank()
+                    trailingAction = { if (isMyProfile && navController != null) navController.navigate(com.kelompok2.scarla.navigation.Screen.EditInterests.route) },
+                    showEdit = isMyProfile
                 ) {
                     val values = uiState.favoriteSubjects.ifEmpty {
                         uiState.topSubjectFromProgress?.let { listOf(it) } ?: emptyList()
@@ -274,8 +289,8 @@ fun ProfilScreen(
 
                 ProfileSection(
                     title = "Hobi",
-                    trailingAction = { if (!uid.isNullOrBlank() && navController != null) navController.navigate(com.kelompok2.scarla.navigation.Screen.EditInterests.route) },
-                    showEdit = !uid.isNullOrBlank()
+                    trailingAction = { if (isMyProfile && navController != null) navController.navigate(com.kelompok2.scarla.navigation.Screen.EditInterests.route) },
+                    showEdit = isMyProfile
                 ) {
                     if (uiState.hobbies.isEmpty()) {
                         Text(text = "Belum ada hobi", style = PoppinsTinyRegular, color = Neutral600)
@@ -286,17 +301,24 @@ fun ProfilScreen(
 
                 ProfileSection(
                     title = "MBTI",
-                    trailingAction = { if (!uid.isNullOrBlank() && navController != null) navController.navigate(com.kelompok2.scarla.navigation.Screen.EditMbti.route) },
-                    showEdit = !uid.isNullOrBlank()
+                    trailingAction = { if (isMyProfile && navController != null) navController.navigate(com.kelompok2.scarla.navigation.Screen.EditMbti.route) },
+                    showEdit = isMyProfile
                 ) {
                     ProfileChipGroup(listOf(uiState.mbti)) { "🧠" }
                 }
 
+                val displayAchievements = if (isMyProfile) {
+                    uiState.achievements
+                } else {
+                    uiState.achievements.filter { it.current >= it.target }
+                }
+
                 AchievementSection(
-                    achievements = uiState.achievements,
+                    achievements = displayAchievements,
                     showAll = showAllAchievements,
-                    onToggleShowAll = { 
-                        if (navController != null) {
+                    isMyProfile = isMyProfile,
+                    onToggleShowAll = {
+                        if (navController != null && isMyProfile) {
                             navController.navigate(com.kelompok2.scarla.navigation.Screen.Achievement.route)
                         }
                     }
@@ -313,7 +335,7 @@ fun ProfilScreen(
 @Composable
 private fun ProfileIdentityCard(
     uiState: ProfileUiState,
-    onEdit: () -> Unit,
+    onEdit: (() -> Unit)? = null,
 ) {
     val context = LocalContext.current
     val avatarRes = remember(uiState.avatar) {
@@ -361,8 +383,10 @@ private fun ProfileIdentityCard(
                 }
             }
 
-            IconButton(onClick = onEdit, modifier = Modifier.size(28.dp)) {
-                Icon(imageVector = Icons.Default.Edit, contentDescription = "Edit profil", tint = Neutral800)
+            if (onEdit != null) {
+                IconButton(onClick = onEdit, modifier = Modifier.size(28.dp)) {
+                    Icon(imageVector = Icons.Default.Edit, contentDescription = "Edit profil", tint = Neutral800)
+                }
             }
         }
 
@@ -455,9 +479,10 @@ private fun ProfileSection(
 private fun AchievementSection(
     achievements: List<AchievementUi>,
     showAll: Boolean,
+    isMyProfile: Boolean = true,
     onToggleShowAll: () -> Unit,
 ) {
-    val visibleItems = achievements.take(2)
+    val visibleItems = if (isMyProfile && !showAll) achievements.take(2) else achievements
 
     Column(
         modifier = Modifier
@@ -473,7 +498,7 @@ private fun AchievementSection(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(text = "Achievement", style = PoppinsRegularSemibold, color = Neutral900)
-            if (achievements.isNotEmpty()) {
+            if (achievements.isNotEmpty() && isMyProfile) {
                 Text(
                     text = "Lihat Semua",
                     style = PoppinsTinyRegular,
@@ -1113,8 +1138,8 @@ private fun calculateAge(birthDate: Timestamp?): Int? {
     val birth = Calendar.getInstance().apply { time = date }
     var age = now.get(Calendar.YEAR) - birth.get(Calendar.YEAR)
     val hasBirthdayPassed = now.get(Calendar.MONTH) > birth.get(Calendar.MONTH) ||
-        (now.get(Calendar.MONTH) == birth.get(Calendar.MONTH) &&
-            now.get(Calendar.DAY_OF_MONTH) >= birth.get(Calendar.DAY_OF_MONTH))
+            (now.get(Calendar.MONTH) == birth.get(Calendar.MONTH) &&
+                    now.get(Calendar.DAY_OF_MONTH) >= birth.get(Calendar.DAY_OF_MONTH))
     if (!hasBirthdayPassed) {
         age -= 1
     }

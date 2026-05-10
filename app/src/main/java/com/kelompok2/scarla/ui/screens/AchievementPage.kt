@@ -80,6 +80,7 @@ fun AchievementPage(
 
     // REAKTIF: collectAsStateWithLifecycle — rekomposisi otomatis saat data Firestore berubah
     val state by viewModel.achievementState.collectAsStateWithLifecycle()
+    val showUnlockBanner by viewModel.showUnlockBanner.collectAsStateWithLifecycle()
 
     // Pisah unlocked dan locked untuk tampilan berbeda
     val unlockedList = state.achievements.filter { it.isUnlocked }
@@ -260,8 +261,8 @@ fun AchievementPage(
         }
 
         // ── POPUP Achievement Unlock (REAKTIF — muncul otomatis saat unlock) ──
-        // Dipicu oleh newlyUnlocked di AchievementPageUiState
-        state.newlyUnlocked?.let { newAchieve ->
+        // Dipicu oleh showUnlockBanner di AchievementViewModel
+        showUnlockBanner?.let { newAchieve ->
             AchievementUnlockBanner(
                 achievement = newAchieve,
                 onDismiss = { viewModel.dismissUnlockBanner() }
@@ -436,7 +437,7 @@ private fun AchievementUnlockBanner(
 ) {
     // Auto dismiss setelah 3.5 detik
     LaunchedEffect(achievement.id) {
-        delay(1000)
+        delay(3500)
         onDismiss()
     }
 

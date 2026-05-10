@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.ListenerRegistration
 import com.google.firebase.firestore.Query
 import com.kelompok2.scarla.firebase.FirestoreInitializer
 import kotlinx.coroutines.channels.awaitClose
@@ -16,6 +17,7 @@ import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.tasks.await
 
 // ── Model ──────────────────────────────────────────────────────────────────
 
@@ -44,7 +46,8 @@ data class ChatUiState(
     val isLoadingMessages: Boolean = false,
     val activeChatId: String? = null,
     val activePeerName: String = "",
-    val activePeerAvatar: String = ""
+    val activePeerAvatar: String = "",
+    val activePeerIsOnline: Boolean = false
 )
 
 // ── ViewModel ──────────────────────────────────────────────────────────────
@@ -109,7 +112,8 @@ class ChatViewModel : ViewModel() {
     )
 
     // Listener aktif untuk chat yang sedang dibuka
-    private var activeMessageListener: com.google.firebase.firestore.ListenerRegistration? = null
+    private var activeMessageListener: ListenerRegistration? = null
+    private var activeUserListener: ListenerRegistration? = null
 
     /**
      * REAKTIF: Mulai mendengarkan pesan dari chat spesifik.
@@ -122,6 +126,7 @@ class ChatViewModel : ViewModel() {
 
         // Hentikan listener sebelumnya jika ada
         activeMessageListener?.remove()
+        activeUserListener?.remove()
 
         _uiState.update {
             it.copy(
@@ -129,8 +134,25 @@ class ChatViewModel : ViewModel() {
                 activeChatId = chatId,
                 activePeerName = peerName,
                 activePeerAvatar = peerAvatar,
+                activePeerIsOnline = false,
                 messages = emptyList()
             )
+        }
+
+        // Ambil avatar, nama, dan status online secara real-time
+        activeUserListener = db.collection("users").document(peerUid).addSnapshotListener { snap, _ ->
+            if (snap != null && snap.exists()) {
+                val avatar = snap.getString("avatarUrl") ?: snap.getString("avatar") ?: ""
+                val name = snap.getString("name") ?: peerName
+                val isOnline = snap.getBoolean("isOnline") ?: false
+                _uiState.update {
+                    it.copy(
+                        activePeerName = name,
+                        activePeerAvatar = avatar.ifBlank { it.activePeerAvatar },
+                        activePeerIsOnline = isOnline
+                    )
+                }
+            }
         }
 
         // REAKTIF: subscribe ke sub-koleksi chats dengan ordering timestamp
@@ -167,7 +189,9 @@ class ChatViewModel : ViewModel() {
     /** Tutup chat dan bersihkan listener */
     fun closeChat() {
         activeMessageListener?.remove()
+        activeUserListener?.remove()
         activeMessageListener = null
+        activeUserListener = null
         _uiState.update {
             it.copy(
                 activeChatId = null,

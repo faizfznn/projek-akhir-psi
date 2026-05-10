@@ -84,11 +84,15 @@ class AchievementViewModel : ViewModel() {
 
                 previousUnlockedIds = currentUnlockedIds
 
+                if (newlyUnlocked != null) {
+                    _showUnlockBanner.update { newlyUnlocked }
+                }
+
                 trySend(
                     AchievementPageUiState(
                         achievements = list,
                         isLoading = false,
-                        newlyUnlocked = newlyUnlocked
+                        newlyUnlocked = null // Tidak lagi digunakan, dialihkan ke _showUnlockBanner
                     )
                 )
             }

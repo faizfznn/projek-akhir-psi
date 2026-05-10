@@ -67,7 +67,14 @@ sealed class Screen(val route: String) {
     object FriendRequests : Screen("friend_requests_screen")
     object Chat : Screen("chat_list")
     object ChatRoom : Screen("chat_room/{peerUid}/{peerName}") {
-        fun createRoute(peerUid: String, peerName: String) = "chat_room/$peerUid/$peerName"
+        fun createRoute(peerUid: String, peerName: String): String {
+            val safeName = peerName.ifBlank { "Pengguna" }
+            val encodedName = java.net.URLEncoder.encode(safeName, "UTF-8")
+            return "chat_room/$peerUid/$encodedName"
+        }
+    }
+    object PeerProfile : Screen("peer_profile/{peerUid}") {
+        fun createRoute(peerUid: String) = "peer_profile/$peerUid"
     }
 }
 
@@ -234,6 +241,19 @@ fun AppNavigation() {
         composable(Screen.Profile.route) {
             ProfilScreen(
                 navController = navController
+            )
+        }
+
+        composable(
+            route = Screen.PeerProfile.route,
+            arguments = listOf(
+                androidx.navigation.navArgument("peerUid") { type = androidx.navigation.NavType.StringType }
+            )
+        ) { backStackEntry ->
+            val peerUid = backStackEntry.arguments?.getString("peerUid")
+            ProfilScreen(
+                navController = navController,
+                peerUid = peerUid
             )
         }
 
