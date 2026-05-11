@@ -353,19 +353,8 @@ fun ChatPage(
                 }
             }
         } else {
-            // TAB KOMUNITAS
-            Box(
-                modifier = Modifier.fillMaxSize(),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = "Komunitas - Coming Soon",
-                    style = TextStyle(
-                        fontSize = 14.sp,
-                        color = Neutral500
-                    )
-                )
-            }
+            // TAB KOMUNITAS — UI di KomunitasPage.kt
+            KomunitasTabContent(navController = navController)
         }
     }
 }
