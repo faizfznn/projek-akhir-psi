@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBarsPadding
@@ -33,6 +34,9 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.ChatBubbleOutline
+import androidx.compose.material.icons.filled.Notifications
+import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -40,15 +44,21 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextField
+import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
@@ -67,6 +77,7 @@ import com.google.firebase.auth.FirebaseAuth
 import com.kelompok2.scarla.R
 import com.kelompok2.scarla.navigation.Screen
 import com.kelompok2.scarla.ui.theme.Neutral300
+import com.kelompok2.scarla.ui.theme.Neutral500
 import com.kelompok2.scarla.ui.theme.Neutral600
 import com.kelompok2.scarla.ui.theme.Neutral700
 import com.kelompok2.scarla.ui.theme.Neutral800
@@ -88,22 +99,43 @@ import java.util.Locale
 @Composable
 fun ChatPage(
     navController: NavController? = null,
-    viewModel: ChatViewModel = viewModel()
+    viewModel: ChatViewModel = viewModel(),
+    onUnreadCountChange: (Int) -> Unit = {}
 ) {
     // REAKTIF: collectAsStateWithLifecycle → UI otomatis update saat ada chat baru
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val contacts by viewModel.contactsFlow.collectAsStateWithLifecycle()
+    
+    LaunchedEffect(contacts) {
+        val totalUnread = contacts.sumOf { it.unreadCount }
+        onUnreadCountChange(totalUnread)
+    }
+
+    // STATE untuk Tab & Search
+    var selectedTab by remember { mutableStateOf(0) } // 0 = Chat, 1 = Komunitas
+    var searchQuery by remember { mutableStateOf("") }
+    
+    // Filter contacts berdasarkan search (hanya ketika tab Chat aktif)
+    val filteredContacts = if (selectedTab == 0 && searchQuery.isEmpty()) {
+        contacts
+    } else if (selectedTab == 0) {
+        contacts.filter { 
+            it.name.contains(searchQuery, ignoreCase = true) ||
+            it.lastMessage.contains(searchQuery, ignoreCase = true)
+        }
+    } else {
+        emptyList() // Tab Komunitas tidak butuh search
+    }
 
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(0xFFFCFCFC))
+            .background(Color.White)
     ) {
-        // ── Header ──────────────────────────────────────────────────────
+        // ── Header dengan Title ─────────────────────────────────────────
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .background(Color.White)
                 .padding(horizontal = 20.dp, vertical = 16.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
@@ -111,395 +143,370 @@ fun ChatPage(
             Text(
                 text = "Pesan",
                 style = TextStyle(
-                    fontSize = 22.sp,
+                    fontSize = 28.sp,
                     fontFamily = FontFamily(Font(R.font.poppins_bold)),
                     fontWeight = FontWeight(700),
                     color = Neutral900
                 )
             )
-            // Badge jumlah chat
-            if (contacts.isNotEmpty()) {
+            
+            // Icons (notification & settings) - bisa implementasikan nanti
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                modifier = Modifier.padding(end = 4.dp)
+            ) {
+                IconButton(onClick = { }) {
+                    Icon(
+                        imageVector = Icons.Filled.Notifications,
+                        contentDescription = "Notifikasi",
+                        tint = Neutral900,
+                        modifier = Modifier.size(24.dp)
+                    )
+                }
+                IconButton(onClick = { }) {
+                    Icon(
+                        imageVector = Icons.Filled.Settings,
+                        contentDescription = "Pengaturan",
+                        tint = Neutral900,
+                        modifier = Modifier.size(24.dp)
+                    )
+                }
+            }
+        }
+        
+        // ── Tab Navigation ─────────────────────────────────────────────
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 20.dp)
+                .height(52.dp),
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            // Tab Chat
+            Box(
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxHeight()
+                    .clip(RoundedCornerShape(28.dp))
+                    .background(
+                        if (selectedTab == 0) Color(0xFFFFDD00) else Color.Transparent
+                    )
+                    .clickable { 
+                        selectedTab = 0
+                        searchQuery = "" // Reset search saat ganti tab
+                    }
+                    .border(
+                        width = 3.dp,
+                        color = Color(0xFFFFEA00),
+                        shape = RoundedCornerShape(28.dp)
+                    ),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = "Chat",
+                    style = TextStyle(
+                        fontSize = 16.sp,
+                        fontFamily = FontFamily(Font(R.font.poppins_bold)),
+                        fontWeight = FontWeight(700),
+                        color = Neutral900
+                    )
+                )
+            }
+            
+            // Tab Komunitas
+            Box(
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxHeight()
+                    .clip(RoundedCornerShape(28.dp))
+                    .background(
+                        if (selectedTab == 1) Color(0xFFFFDD00) else Color.Transparent
+                    )
+                    .clickable { 
+                        selectedTab = 1
+                        searchQuery = "" // Reset search saat ganti tab
+                    }
+                    .border(
+                        width = 3.dp,
+                        color = Color(0xFFFFEA00),
+                        shape = RoundedCornerShape(28.dp)
+                    ),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = "Komunitas",
+                    style = TextStyle(
+                        fontSize = 16.sp,
+                        fontFamily = FontFamily(Font(R.font.poppins_bold)),
+                        fontWeight = FontWeight(700),
+                        color = Neutral900
+                    )
+                )
+            }
+        }
+        
+        // ── Search Bar (Hanya muncul di Tab Chat) ───────────────────────
+        if (selectedTab == 0) {
+            Spacer(modifier = Modifier.height(12.dp))
+            
+            TextField(
+                value = searchQuery,
+                onValueChange = { searchQuery = it },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 20.dp)
+                    .height(48.dp)
+                    .clip(RoundedCornerShape(12.dp)),
+                placeholder = {
+                    Text(
+                        text = "Cari chat...",
+                        style = TextStyle(
+                            fontSize = 14.sp,
+                            color = Neutral500
+                        )
+                    )
+                },
+                leadingIcon = {
+                    Icon(
+                        imageVector = Icons.Default.Search,
+                        contentDescription = "Search",
+                        tint = Neutral500,
+                        modifier = Modifier.size(20.dp)
+                    )
+                },
+                colors = TextFieldDefaults.colors(
+                    unfocusedContainerColor = Color(0xFFF5F5F5),
+                    focusedContainerColor = Color(0xFFF5F5F5),
+                    unfocusedIndicatorColor = Color.Transparent,
+                    focusedIndicatorColor = Color.Transparent,
+                    cursorColor = Neutral900
+                ),
+                textStyle = TextStyle(
+                    fontSize = 14.sp,
+                    color = Neutral900
+                ),
+                singleLine = true
+            )
+        }
+        
+        Spacer(modifier = Modifier.height(12.dp))
+        
+        // ── Konten (Tab-based) ──────────────────────────────────────────
+        if (selectedTab == 0) {
+            // TAB CHAT
+            if (filteredContacts.isEmpty() && searchQuery.isNotEmpty()) {
+                // Hasil search kosong
                 Box(
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(12.dp))
-                        .background(Secondary500)
-                        .padding(horizontal = 10.dp, vertical = 3.dp)
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
                 ) {
                     Text(
-                        text = "${contacts.size}",
+                        text = "Tidak ada chat yang ditemukan",
                         style = TextStyle(
-                            fontSize = 12.sp,
-                            fontFamily = FontFamily(Font(R.font.poppins_bold)),
-                            fontWeight = FontWeight(700),
-                            color = Color.White
+                            fontSize = 14.sp,
+                            color = Neutral500
                         )
                     )
                 }
-            }
-        }
-
-        // ── Konten ──────────────────────────────────────────────────────
-        if (contacts.isEmpty()) {
-            EmptyChatState()
-        } else {
-            LazyColumn(
-                modifier = Modifier.fillMaxSize(),
-                contentPadding = PaddingValues(vertical = 8.dp)
-            ) {
-                items(contacts, key = { it.uid }) { contact ->
-                    ChatContactCard(
-                        contact = contact,
-                        onClick = {
-                            viewModel.openChat(
-                                peerUid = contact.uid,
-                                peerName = contact.name,
-                                peerAvatar = contact.avatarUrl
-                            )
-                            navController?.navigate(Screen.ChatRoom.createRoute(contact.uid, contact.name))
-                        }
-                    )
-                }
-            }
-        }
-    }
-}
-
-// ──────────────────────────────────────────────────────────────────────────────
-// HALAMAN CHAT ROOM — Rute: "chat_room/{peerUid}/{peerName}"
-// Menampilkan percakapan real-time dengan satu orang.
-// ──────────────────────────────────────────────────────────────────────────────
-
-@Composable
-fun ChatRoomPage(
-    peerUid: String,
-    peerName: String,
-    peerAvatar: String = "",
-    navController: NavController? = null,
-    viewModel: ChatViewModel = viewModel()
-) {
-    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    val myUid = remember { FirebaseAuth.getInstance().currentUser?.uid ?: "" }
-    val listState = rememberLazyListState()
-
-    // REAKTIF: Mulai listen pesan begitu screen dibuka
-    LaunchedEffect(peerUid) {
-        viewModel.openChat(
-            peerUid = peerUid,
-            peerName = peerName,
-            peerAvatar = peerAvatar
-        )
-    }
-
-    // Auto-scroll ke pesan terbaru setiap kali messages berubah
-    LaunchedEffect(uiState.messages.size) {
-        if (uiState.messages.isNotEmpty()) {
-            listState.animateScrollToItem(uiState.messages.size - 1)
-        }
-    }
-
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(Color(0xFFFCFCFC))
-            .navigationBarsPadding()
-            .imePadding()
-    ) {
-        // ── App Bar ──────────────────────────────────────────────────────
-        ChatRoomHeader(
-            peerName = uiState.activePeerName.ifBlank { peerName },
-            peerAvatar = uiState.activePeerAvatar.ifBlank { peerAvatar },
-            isOnline = uiState.activePeerIsOnline,
-            onBack = {
-                viewModel.closeChat()
-                navController?.popBackStack()
-            },
-            onProfileClick = {
-                navController?.navigate(com.kelompok2.scarla.navigation.Screen.PeerProfile.createRoute(peerUid))
-            }
-        )
-
-        // ── Daftar Pesan (REAKTIF — otomatis update saat ada pesan baru) ──
-        Box(modifier = Modifier.weight(1f)) {
-            if (uiState.isLoadingMessages) {
-                CircularProgressIndicator(
-                    modifier = Modifier.align(Alignment.Center),
-                    color = Secondary500
-                )
-            } else if (uiState.messages.isEmpty()) {
-                Text(
-                    text = "Belum ada pesan. Mulai percakapan! 👋",
-                    style = TextStyle(
-                        fontSize = 14.sp,
-                        fontFamily = FontFamily(Font(R.font.poppins_regular)),
-                        color = Neutral600
-                    ),
-                    modifier = Modifier
-                        .align(Alignment.Center)
-                        .padding(24.dp),
-                    textAlign = TextAlign.Center
-                )
+            } else if (contacts.isEmpty()) {
+                // Benar-benar tidak ada chat
+                EmptyChatState()
             } else {
                 LazyColumn(
-                    state = listState,
                     modifier = Modifier.fillMaxSize(),
-                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                    verticalArrangement = Arrangement.spacedBy(12.dp), // Jarak antar card chat
+                    contentPadding = PaddingValues(horizontal = 20.dp, vertical = 16.dp) // Padding ke layar
                 ) {
-                    items(uiState.messages, key = { it.id }) { msg ->
-                        MessageBubble(
-                            message = msg,
-                            isMe = msg.senderUid == myUid
-                        )
+                    items(filteredContacts, key = { it.uid }) { contact ->
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .border(
+                                    width = 3.dp,
+                                    color = Color(0xFFFFDD00),
+                                    shape = RoundedCornerShape(28.dp) 
+                                )
+                                .clip(RoundedCornerShape(28.dp))
+                                .background(
+                                    brush = Brush.horizontalGradient(
+                                        colors = listOf(
+                                            Color.White,               // Warna di sisi kiri
+                                            Color(0xFFFFF7B0)          // Warna di sisi kanan (kuning soft). Silakan sesuaikan kode HEX ini dengan figma
+                                        )
+                                    )
+                                )
+                        ) {
+                            ChatContactCardStyled(
+                                contact = contact,
+                                onClick = {
+                                    viewModel.openChat(
+                                        peerUid = contact.uid,
+                                        peerName = contact.name,
+                                        peerAvatar = contact.avatarUrl
+                                    )
+                                    navController?.navigate(Screen.ChatRoom.createRoute(contact.uid, contact.name))
+                                }
+                            )
+                        }
+                        
                     }
                 }
             }
+        } else {
+            // TAB KOMUNITAS
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = "Komunitas - Coming Soon",
+                    style = TextStyle(
+                        fontSize = 14.sp,
+                        color = Neutral500
+                    )
+                )
+            }
         }
-
-        // ── Input Field ──────────────────────────────────────────────────
-        ChatInputBar(
-            value = uiState.currentMessage,
-            onValueChange = viewModel::onMessageChange,
-            onSend = viewModel::sendMessage
-        )
     }
 }
 
-// ──────────────────────────────────────────────────────────────────────────────
-// KOMPONEN INTERNAL
-// ──────────────────────────────────────────────────────────────────────────────
-
 @Composable
-private fun ChatRoomHeader(
-    peerName: String,
-    peerAvatar: String,
-    isOnline: Boolean,
-    onBack: () -> Unit,
-    onProfileClick: () -> Unit
+private fun ChatContactCardStyled(
+    contact: ChatContact,
+    onClick: () -> Unit
 ) {
     val context = LocalContext.current
-    val avatarRes = remember(peerAvatar) {
-        if (peerAvatar.isNotBlank())
-            context.resources.getIdentifier(peerAvatar, "drawable", context.packageName)
+    val avatarRes = remember(contact.avatarUrl) {
+        if (contact.avatarUrl.isNotBlank())
+            context.resources.getIdentifier(contact.avatarUrl, "drawable", context.packageName)
         else 0
     }
 
-    Row(
+    val timeStr = remember(contact.lastMessageMillis) {
+        if (contact.lastMessageMillis > 0L)
+            SimpleDateFormat("HH:mm", Locale("id")).format(Date(contact.lastMessageMillis))
+        else ""
+    }
+
+    Box(
         modifier = Modifier
             .fillMaxWidth()
-            .background(Color.White)
-            .shadow(elevation = 2.dp)
-            .padding(horizontal = 8.dp, vertical = 12.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(8.dp)
-    ) {
-        IconButton(onClick = onBack) {
-            Icon(
-                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                contentDescription = "Kembali",
-                tint = Neutral800
+            .clip(RoundedCornerShape(20.dp))
+            .background(
+                brush = Brush.linearGradient(
+                    colors = listOf(
+                        Color(0xFFF5C563), // Kuning
+                        Color(0xFFE8A835)  // Orange
+                    )
+                )
             )
-        }
-
+            .clickable(onClick = onClick)
+            .padding(14.dp)
+    ) {
         Row(
-            modifier = Modifier
-                .weight(1f)
-                .clickable { onProfileClick() }
-                .padding(vertical = 4.dp, horizontal = 4.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(10.dp)
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(14.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            // Avatar
+            // Avatar (Lebih besar & prominent)
             Box(
                 modifier = Modifier
-                    .size(40.dp)
+                    .size(56.dp)
                     .clip(CircleShape)
-                    .background(Primary500)
-                    .border(1.dp, Neutral300, CircleShape),
+                    .background(Color(0xFFFFF9E6)),
                 contentAlignment = Alignment.Center
             ) {
                 if (avatarRes != 0) {
                     androidx.compose.foundation.Image(
                         painter = painterResource(avatarRes),
-                        contentDescription = peerName,
-                        modifier = Modifier.size(36.dp)
+                        contentDescription = contact.name,
+                        modifier = Modifier.size(52.dp),
+                        contentScale = ContentScale.Crop
                     )
                 } else {
                     Text(
-                        text = peerName.firstOrNull()?.uppercase() ?: "?",
+                        text = contact.name.firstOrNull()?.uppercase() ?: "?",
                         style = TextStyle(
-                            fontSize = 16.sp,
+                            fontSize = 20.sp,
                             fontFamily = FontFamily(Font(R.font.poppins_bold)),
+                            fontWeight = FontWeight(700),
                             color = Neutral900
                         )
                     )
                 }
             }
 
-            Column {
+            // Chat Content (Name + Last Message)
+            Column(
+                modifier = Modifier
+                    .weight(1f)
+                    .padding(top = 2.dp),
+                verticalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                // Nama Chat
                 Text(
-                    text = peerName.ifBlank { "Pengguna" },
+                    text = contact.name.ifBlank { "Pengguna" },
                     style = TextStyle(
                         fontSize = 15.sp,
                         fontFamily = FontFamily(Font(R.font.poppins_bold)),
-                        fontWeight = FontWeight(600),
-                        color = Neutral900
+                        fontWeight = FontWeight(700),
+                        color = Color.White
+                    ),
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+                
+                // Last Message Preview
+                Text(
+                    text = contact.lastMessage.ifBlank { "Mulai percakapan..." },
+                    style = TextStyle(
+                        fontSize = 13.sp,
+                        fontFamily = FontFamily(Font(R.font.poppins_regular)),
+                        color = Color.White.copy(alpha = 0.90f)
+                    ),
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
+
+            // Timestamp & Badge Container
+            Column(
+                modifier = Modifier.padding(top = 4.dp),
+                horizontalAlignment = Alignment.End,
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                // Waktu
+                Text(
+                    text = timeStr,
+                    style = TextStyle(
+                        fontSize = 12.sp,
+                        fontFamily = FontFamily(Font(R.font.poppins_regular)),
+                        color = Color.White,
+                        fontWeight = FontWeight(500)
                     )
                 )
-                if (isOnline) {
-                    Text(
-                        text = "Aktif",
-                        style = TextStyle(
-                            fontSize = 11.sp,
-                            fontFamily = FontFamily(Font(R.font.poppins_regular)),
-                            color = Color(0xFF4CAF50) // Hijau
-                        )
-                    )
-                } else {
-                    Text(
-                        text = "Tidak Aktif",
-                        style = TextStyle(
-                            fontSize = 11.sp,
-                            fontFamily = FontFamily(Font(R.font.poppins_regular)),
-                            color = Neutral600 // Abu-abu
-                        )
-                    )
-                }
-            }
-        }
-    }
-}
 
-@Composable
-private fun MessageBubble(
-    message: ChatMessage,
-    isMe: Boolean
-) {
-    val bubbleColor = if (isMe) Secondary500 else Color.White
-    val textColor = if (isMe) Color.White else Neutral900
-    val alignment = if (isMe) Alignment.End else Alignment.Start
-    val shape = if (isMe)
-        RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp, bottomStart = 16.dp, bottomEnd = 4.dp)
-    else
-        RoundedCornerShape(topStart = 4.dp, topEnd = 16.dp, bottomStart = 16.dp, bottomEnd = 16.dp)
-
-    val timeStr = remember(message.timestampMillis) {
-        if (message.timestampMillis > 0L)
-            SimpleDateFormat("HH:mm", Locale("id")).format(Date(message.timestampMillis))
-        else ""
-    }
-
-    // ANIMASI: pesan baru slide in dari bawah
-    AnimatedVisibility(
-        visible = true,
-        enter = fadeIn() + slideInVertically(initialOffsetY = { it }),
-        exit = fadeOut()
-    ) {
-        Column(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalAlignment = alignment
-        ) {
-            Box(
-                modifier = Modifier
-                    .widthIn(max = 280.dp)
-                    .shadow(
-                        elevation = if (!isMe) 2.dp else 0.dp,
-                        shape = shape
-                    )
-                    .background(bubbleColor, shape)
-                    .border(
-                        width = if (!isMe) 1.dp else 0.dp,
-                        color = if (!isMe) Neutral300 else Color.Transparent,
-                        shape = shape
-                    )
-                    .padding(horizontal = 14.dp, vertical = 10.dp)
-            ) {
-                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                    Text(
-                        text = message.text,
-                        style = TextStyle(
-                            fontSize = 13.sp,
-                            fontFamily = FontFamily(Font(R.font.poppins_regular)),
-                            color = textColor
-                        )
-                    )
-                    if (timeStr.isNotBlank()) {
+                // Badge Unread Count (Hanya jika ada pesan unread)
+                if (contact.unreadCount > 0) {
+                    Box(
+                        modifier = Modifier
+                            .size(28.dp)
+                            .clip(CircleShape)
+                            .background(Color(0xFFFFFF00)),
+                        contentAlignment = Alignment.Center
+                    ) {
                         Text(
-                            text = timeStr,
+                            text = contact.unreadCount.toString(),
                             style = TextStyle(
-                                fontSize = 10.sp,
-                                fontFamily = FontFamily(Font(R.font.poppins_regular)),
-                                color = if (isMe) Color.White.copy(alpha = 0.75f) else Neutral600
-                            ),
-                            modifier = Modifier.align(Alignment.End)
+                                fontSize = 11.sp,
+                                fontFamily = FontFamily(Font(R.font.poppins_bold)),
+                                fontWeight = FontWeight(700),
+                                color = Neutral900
+                            )
                         )
                     }
                 }
             }
-        }
-    }
-}
-
-@Composable
-private fun ChatInputBar(
-    value: String,
-    onValueChange: (String) -> Unit,
-    onSend: () -> Unit
-) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(Color.White)
-            .shadow(elevation = 4.dp)
-            .padding(horizontal = 12.dp, vertical = 10.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(8.dp)
-    ) {
-        OutlinedTextField(
-            value = value,
-            onValueChange = onValueChange,
-            modifier = Modifier.weight(1f),
-            placeholder = {
-                Text(
-                    "Tulis pesan...",
-                    style = TextStyle(
-                        fontSize = 13.sp,
-                        fontFamily = FontFamily(Font(R.font.poppins_regular)),
-                        color = Neutral600
-                    )
-                )
-            },
-            shape = RoundedCornerShape(24.dp),
-            colors = OutlinedTextFieldDefaults.colors(
-                focusedBorderColor = Secondary500,
-                unfocusedBorderColor = Neutral300,
-                focusedContainerColor = Color.White,
-                unfocusedContainerColor = Color.White
-            ),
-            textStyle = TextStyle(
-                fontSize = 13.sp,
-                fontFamily = FontFamily(Font(R.font.poppins_regular)),
-                color = Neutral900
-            ),
-            maxLines = 4,
-            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Send),
-            keyboardActions = KeyboardActions(onSend = { if (value.isNotBlank()) onSend() })
-        )
-
-        // Tombol kirim
-        Box(
-            modifier = Modifier
-                .size(44.dp)
-                .clip(CircleShape)
-                .background(if (value.isNotBlank()) Secondary500 else Neutral300)
-                .clickable(enabled = value.isNotBlank()) { onSend() },
-            contentAlignment = Alignment.Center
-        ) {
-            Icon(
-                imageVector = Icons.AutoMirrored.Filled.Send,
-                contentDescription = "Kirim",
-                tint = Color.White,
-                modifier = Modifier.size(20.dp)
-            )
         }
     }
 }

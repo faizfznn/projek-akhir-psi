@@ -1,5 +1,6 @@
 package com.kelompok2.scarla.ui.screens
 
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -59,19 +60,23 @@ private data class BottomTab(
     val badgeCount: Int = 0
 )
 
-private val tabs = listOf(
-    BottomTab("HOME", "home", Icons.Filled.Home), // Menggunakan huruf kapital untuk judul aktif sesuai mockup
-    BottomTab("PESAN", "pesan", Icons.Filled.Message, badgeCount = 7),
-    BottomTab("CARI", "cari", Icons.Filled.Search),
-    BottomTab("BELAJAR", "belajar", Icons.Filled.MenuBook),
-    BottomTab("PROFIL", "profil", Icons.Filled.Person)
-)
-
 @Composable
 fun MainScreen(navController: NavController? = null) {
     var selectedTab by rememberSaveable { mutableStateOf(0) }
     var showSettingsFromProfile by rememberSaveable { mutableStateOf(false) }
+    var totalUnreadMessages by rememberSaveable { mutableStateOf(0) }  // ← KONSISTEN: gunakan totalUnreadMessages
     val scope = rememberCoroutineScope()
+
+    // ── TABS DEFINITION (di dalam function, bukan di luar)
+    val tabs = remember(totalUnreadMessages) {
+        listOf(
+            BottomTab("HOME", "home", Icons.Filled.Home),
+            BottomTab("PESAN", "pesan", Icons.Filled.Message, badgeCount = totalUnreadMessages),
+            BottomTab("CARI", "cari", Icons.Filled.Search),
+            BottomTab("BELAJAR", "belajar", Icons.Filled.MenuBook),
+            BottomTab("PROFIL", "profil", Icons.Filled.Person)
+        )
+    }
 
     // ── INISIALISASI OTOMATIS ────────────────────────────────────────────
     // Dipanggil sekali saat MainScreen pertama kali tampil.
@@ -192,7 +197,10 @@ fun MainScreen(navController: NavController? = null) {
                         navController?.navigate("html_screen")
                     }
                 )
-                1 -> ChatPage(navController = navController)
+                1 -> ChatPage(
+                    navController = navController,
+                    onUnreadCountChange = { count -> totalUnreadMessages = count }  // ← KONSISTEN
+                )
                 2 -> CariScreen(navController = navController)
                 3 -> {
                     navController?.let {
