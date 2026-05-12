@@ -5,9 +5,10 @@ import androidx.compose.animation.AnimatedContentTransitionScope
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
@@ -38,6 +39,12 @@ import com.kelompok2.scarla.ui.screens.SignupScreen
 import com.kelompok2.scarla.ui.screens.SplashScreen
 import com.kelompok2.scarla.ui.screens.HtmlScreen
 import com.kelompok2.scarla.ui.screens.QuizHtmlScreen
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.saveable.listSaver
+import androidx.compose.runtime.toMutableStateList
+import androidx.compose.runtime.saveable.rememberSaveable
+
 import com.kelompok2.scarla.ui.screens.ChatPage
 import com.kelompok2.scarla.ui.screens.ChatRoomPage
 
@@ -82,6 +89,29 @@ sealed class Screen(val route: String) {
 fun AppNavigation() {
     val navController = rememberNavController()
     val scope = rememberCoroutineScope()
+
+    var htmlQuizFinished by rememberSaveable {
+        mutableStateOf(false)
+    }
+
+    val htmlDownloadedList = rememberSaveable(
+        saver = listSaver(
+            save = { it.toList() },
+            restore = { it.toMutableStateList() }
+        )
+    ) {
+        mutableStateListOf(false, false, false)
+    }
+
+    val htmlFinishedList = rememberSaveable(
+        saver = listSaver(
+            save = { it.toList() },
+            restore = { it.toMutableStateList() }
+        )
+    ) {
+        mutableStateListOf(false, false, false)
+    }
+
 
     NavHost(
         navController = navController,
@@ -301,11 +331,23 @@ fun AppNavigation() {
         }
 
         composable("html_screen") {
-            HtmlScreen(navController = navController)
+            HtmlScreen(
+                navController = navController,
+                isQuizFinished = htmlQuizFinished,
+                downloadedList = htmlDownloadedList,
+                finishedList = htmlFinishedList
+            )
         }
 
         composable("quiz_html") {
-            QuizHtmlScreen(navController = navController)
+
+            QuizHtmlScreen(
+                navController = navController,
+
+                onQuizFinished = {
+                    htmlQuizFinished = true
+                }
+            )
         }
 
         composable(Screen.Achievement.route) {

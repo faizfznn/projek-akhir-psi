@@ -85,4 +85,6 @@ dependencies {
     implementation("com.google.firebase:firebase-firestore")
     implementation("com.google.firebase:firebase-analytics")
     implementation("com.google.android.gms:play-services-auth:21.1.0")
+
+    implementation("androidx.compose.runtime:runtime-livedata:1.6.7")
 }
