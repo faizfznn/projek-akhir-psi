@@ -13,8 +13,10 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.google.firebase.firestore.FirebaseFirestore
+import com.kelompok2.scarla.firebase.FirestoreInitializer
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
+import com.kelompok2.scarla.ui.screens.AchievementPage
 import com.kelompok2.scarla.ui.screens.AuthChoiceScreen
 import com.kelompok2.scarla.ui.screens.BelajarScreen
 import com.kelompok2.scarla.ui.screens.EducationLevelScreen
@@ -22,6 +24,7 @@ import com.kelompok2.scarla.ui.screens.EditAvatarScreen
 import com.kelompok2.scarla.ui.screens.EditInterestsScreen
 import com.kelompok2.scarla.ui.screens.EditMbtiScreen
 import com.kelompok2.scarla.ui.screens.EditProfileScreen
+import com.kelompok2.scarla.ui.screens.FriendRequestsScreen
 import com.kelompok2.scarla.ui.screens.InformatikaScreen
 import com.kelompok2.scarla.ui.screens.InterestsScreen
 import com.kelompok2.scarla.ui.screens.LoginScreen
@@ -42,6 +45,8 @@ import androidx.compose.runtime.saveable.listSaver
 import androidx.compose.runtime.toMutableStateList
 import androidx.compose.runtime.saveable.rememberSaveable
 
+import com.kelompok2.scarla.ui.screens.ChatPage
+import com.kelompok2.scarla.ui.screens.ChatRoomPage
 
 private val firestore by lazy { FirebaseFirestore.getInstance() }
 
@@ -64,6 +69,20 @@ sealed class Screen(val route: String) {
     object Mbti : Screen("mbti_screen")
     object Interests : Screen("interests_screen")
     object Streak : Screen("streak_screen")
+    object HtmlScreen : Screen("html_screen")
+    object Achievement : Screen("achievement_screen")
+    object FriendRequests : Screen("friend_requests_screen")
+    object Chat : Screen("chat_list")
+    object ChatRoom : Screen("chat_room/{peerUid}/{peerName}") {
+        fun createRoute(peerUid: String, peerName: String): String {
+            val safeName = peerName.ifBlank { "Pengguna" }
+            val encodedName = java.net.URLEncoder.encode(safeName, "UTF-8")
+            return "chat_room/$peerUid/$encodedName"
+        }
+    }
+    object PeerProfile : Screen("peer_profile/{peerUid}") {
+        fun createRoute(peerUid: String) = "peer_profile/$peerUid"
+    }
 }
 
 @Composable
@@ -176,6 +195,10 @@ fun AppNavigation() {
                 onBack = { navController.popBackStack() },
                 onLoginSuccess = { uid ->
                     scope.launch {
+                        // Pastikan sub-koleksi (streaks, achievements) sudah ada
+                        // untuk user baru maupun user lama yang belum ter-inisialisasi
+                        FirestoreInitializer.ensureUserInitialized(uid)
+
                         val shouldCompleteProfile = shouldRouteToProfile(uid)
                         navController.navigate(
                             if (shouldCompleteProfile) Screen.ProfileSetup.route else Screen.Streak.route
@@ -251,6 +274,19 @@ fun AppNavigation() {
             )
         }
 
+        composable(
+            route = Screen.PeerProfile.route,
+            arguments = listOf(
+                androidx.navigation.navArgument("peerUid") { type = androidx.navigation.NavType.StringType }
+            )
+        ) { backStackEntry ->
+            val peerUid = backStackEntry.arguments?.getString("peerUid")
+            ProfilScreen(
+                navController = navController,
+                peerUid = peerUid
+            )
+        }
+
         composable(Screen.Settings.route) {
             SettingsScreen(
                 navController = navController,
@@ -311,6 +347,35 @@ fun AppNavigation() {
                 onQuizFinished = {
                     htmlQuizFinished = true
                 }
+            )
+        }
+
+        composable(Screen.Achievement.route) {
+            AchievementPage(navController = navController)
+        }
+
+        composable(Screen.FriendRequests.route) {
+            FriendRequestsScreen(navController = navController)
+        }
+
+        // ── Chat ─────────────────────────────────────────────────────────
+        composable(Screen.Chat.route) {
+            ChatPage(navController = navController)
+        }
+
+        composable(
+            route = Screen.ChatRoom.route,
+            arguments = listOf(
+                androidx.navigation.navArgument("peerUid") { type = androidx.navigation.NavType.StringType },
+                androidx.navigation.navArgument("peerName") { type = androidx.navigation.NavType.StringType }
+            )
+        ) { backStackEntry ->
+            val peerUid = backStackEntry.arguments?.getString("peerUid") ?: ""
+            val peerName = backStackEntry.arguments?.getString("peerName") ?: ""
+            ChatRoomPage(
+                peerUid = peerUid,
+                peerName = peerName,
+                navController = navController
             )
         }
 

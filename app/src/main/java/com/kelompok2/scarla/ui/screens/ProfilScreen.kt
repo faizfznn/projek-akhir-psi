@@ -23,11 +23,13 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.MenuBook
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.ui.draw.shadow
 import androidx.compose.material.icons.filled.LocalFireDepartment
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.AlertDialog
@@ -124,6 +126,7 @@ private data class AchievementUi(
     val subtitle: String,
     val current: Int,
     val target: Int,
+    val imageRes: Int = 0,
 )
 
 private data class MaterialProgress(
@@ -160,31 +163,34 @@ private const val MILLIS_PER_DAY = 86_400_000L
 fun ProfilScreen(
     navController: NavController? = null,
     onOpenSettings: (() -> Unit)? = null,
+    peerUid: String? = null
 ) {
     val auth = remember { FirebaseAuth.getInstance() }
     val firestore = remember { FirebaseFirestore.getInstance() }
     val repository = remember { ProfileReactiveRepository(firestore) }
     val scope = rememberCoroutineScope()
-    val uid = auth.currentUser?.uid
+    val myUid = auth.currentUser?.uid
+    val targetUid = peerUid ?: myUid
+    val isMyProfile = targetUid == myUid
 
-    val profileFlow = remember(uid) {
-        if (uid.isNullOrBlank()) {
+    val profileFlow = remember(targetUid) {
+        if (targetUid.isNullOrBlank()) {
             kotlinx.coroutines.flow.flowOf(
                 ProfileUiState(
                     isLoading = false,
-                    email = auth.currentUser?.email.orEmpty(),
-                    errorMessage = "Silakan login ulang untuk melihat profil"
+                    email = if (isMyProfile) auth.currentUser?.email.orEmpty() else "",
+                    errorMessage = if (isMyProfile) "Silakan login ulang untuk melihat profil" else "Pengguna tidak ditemukan"
                 )
             )
         } else {
-            repository.observeProfileState(uid, auth.currentUser?.email.orEmpty())
+            repository.observeProfileState(targetUid, if (isMyProfile) auth.currentUser?.email.orEmpty() else "")
         }
     }
 
     val uiState by profileFlow.collectAsState(
         initial = ProfileUiState(
-            isLoading = uid != null,
-            email = auth.currentUser?.email.orEmpty()
+            isLoading = targetUid != null,
+            email = if (isMyProfile) auth.currentUser?.email.orEmpty() else ""
         )
     )
 
@@ -194,28 +200,36 @@ fun ProfilScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(AuthBackground)
             .verticalScroll(rememberScrollState())
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
+            horizontalArrangement = if (isMyProfile) Arrangement.SpaceBetween else Arrangement.Start,
             verticalAlignment = Alignment.CenterVertically
         ) {
+            if (!isMyProfile) {
+                IconButton(onClick = { navController?.popBackStack() }) {
+                    Icon(imageVector = Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Kembali")
+                }
+                Spacer(modifier = Modifier.width(8.dp))
+            }
             Text(text = "Profile", style = MaterialTheme.typography.titleLarge, color = Neutral900)
-            IconButton(
-                onClick = {
-                    if (onOpenSettings != null) {
-                        onOpenSettings()
-                    } else if (navController != null) {
-                        navController.navigate(com.kelompok2.scarla.navigation.Screen.Settings.route)
-                    }
-                },
-                modifier = Modifier.size(40.dp)
-            ) {
-                Icon(imageVector = Icons.Default.Settings, contentDescription = "Pengaturan", tint = Neutral800)
+            
+            if (isMyProfile) {
+                IconButton(
+                    onClick = {
+                        if (onOpenSettings != null) {
+                            onOpenSettings()
+                        } else if (navController != null) {
+                            navController.navigate(com.kelompok2.scarla.navigation.Screen.Settings.route)
+                        }
+                    },
+                    modifier = Modifier.size(40.dp)
+                ) {
+                    Icon(imageVector = Icons.Default.Settings, contentDescription = "Pengaturan", tint = Neutral800)
+                }
             }
         }
 
@@ -233,7 +247,9 @@ fun ProfilScreen(
             else -> {
                 ProfileIdentityCard(
                     uiState = uiState,
-                    onEdit = { if (!uid.isNullOrBlank() && navController != null) navController.navigate(com.kelompok2.scarla.navigation.Screen.EditProfile.route) }
+                    onEdit = if (isMyProfile && navController != null) { 
+                        { navController.navigate(com.kelompok2.scarla.navigation.Screen.EditProfile.route) }
+                    } else null
                 )
 
                 Row(
@@ -258,8 +274,8 @@ fun ProfilScreen(
 
                 ProfileSection(
                     title = "Pelajaran Favorit",
-                    trailingAction = { if (!uid.isNullOrBlank() && navController != null) navController.navigate(com.kelompok2.scarla.navigation.Screen.EditInterests.route) },
-                    showEdit = !uid.isNullOrBlank()
+                    trailingAction = { if (isMyProfile && navController != null) navController.navigate(com.kelompok2.scarla.navigation.Screen.EditInterests.route) },
+                    showEdit = isMyProfile
                 ) {
                     val values = uiState.favoriteSubjects.ifEmpty {
                         uiState.topSubjectFromProgress?.let { listOf(it) } ?: emptyList()
@@ -273,8 +289,8 @@ fun ProfilScreen(
 
                 ProfileSection(
                     title = "Hobi",
-                    trailingAction = { if (!uid.isNullOrBlank() && navController != null) navController.navigate(com.kelompok2.scarla.navigation.Screen.EditInterests.route) },
-                    showEdit = !uid.isNullOrBlank()
+                    trailingAction = { if (isMyProfile && navController != null) navController.navigate(com.kelompok2.scarla.navigation.Screen.EditInterests.route) },
+                    showEdit = isMyProfile
                 ) {
                     if (uiState.hobbies.isEmpty()) {
                         Text(text = "Belum ada hobi", style = PoppinsTinyRegular, color = Neutral600)
@@ -285,16 +301,27 @@ fun ProfilScreen(
 
                 ProfileSection(
                     title = "MBTI",
-                    trailingAction = { if (!uid.isNullOrBlank() && navController != null) navController.navigate(com.kelompok2.scarla.navigation.Screen.EditMbti.route) },
-                    showEdit = !uid.isNullOrBlank()
+                    trailingAction = { if (isMyProfile && navController != null) navController.navigate(com.kelompok2.scarla.navigation.Screen.EditMbti.route) },
+                    showEdit = isMyProfile
                 ) {
                     ProfileChipGroup(listOf(uiState.mbti)) { "🧠" }
                 }
 
+                val displayAchievements = if (isMyProfile) {
+                    uiState.achievements
+                } else {
+                    uiState.achievements.filter { it.current >= it.target }
+                }
+
                 AchievementSection(
-                    achievements = uiState.achievements,
+                    achievements = displayAchievements,
                     showAll = showAllAchievements,
-                    onToggleShowAll = { showAllAchievements = !showAllAchievements }
+                    isMyProfile = isMyProfile,
+                    onToggleShowAll = { 
+                        if (navController != null && isMyProfile) {
+                            navController.navigate(com.kelompok2.scarla.navigation.Screen.Achievement.route)
+                        }
+                    }
                 )
             }
         }
@@ -308,7 +335,7 @@ fun ProfilScreen(
 @Composable
 private fun ProfileIdentityCard(
     uiState: ProfileUiState,
-    onEdit: () -> Unit,
+    onEdit: (() -> Unit)? = null,
 ) {
     val context = LocalContext.current
     val avatarRes = remember(uiState.avatar) {
@@ -356,8 +383,10 @@ private fun ProfileIdentityCard(
                 }
             }
 
-            IconButton(onClick = onEdit, modifier = Modifier.size(28.dp)) {
-                Icon(imageVector = Icons.Default.Edit, contentDescription = "Edit profil", tint = Neutral800)
+            if (onEdit != null) {
+                IconButton(onClick = onEdit, modifier = Modifier.size(28.dp)) {
+                    Icon(imageVector = Icons.Default.Edit, contentDescription = "Edit profil", tint = Neutral800)
+                }
             }
         }
 
@@ -450,9 +479,10 @@ private fun ProfileSection(
 private fun AchievementSection(
     achievements: List<AchievementUi>,
     showAll: Boolean,
+    isMyProfile: Boolean = true,
     onToggleShowAll: () -> Unit,
 ) {
-    val visibleItems = if (showAll) achievements else achievements.take(3)
+    val visibleItems = if (isMyProfile && !showAll) achievements.take(2) else achievements
 
     Column(
         modifier = Modifier
@@ -468,9 +498,9 @@ private fun AchievementSection(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(text = "Achievement", style = PoppinsRegularSemibold, color = Neutral900)
-            if (achievements.size > 3) {
+            if (achievements.isNotEmpty() && isMyProfile) {
                 Text(
-                    text = if (showAll) "Sembunyikan" else "Lihat Semua",
+                    text = "Lihat Semua",
                     style = PoppinsTinyRegular,
                     color = Secondary500,
                     modifier = Modifier.clickable(onClick = onToggleShowAll)
@@ -485,32 +515,69 @@ private fun AchievementSection(
 
         visibleItems.forEach { achievement ->
             val boundedCurrent = achievement.current.coerceAtMost(achievement.target)
-            Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text(text = achievement.title, style = PoppinsRegularSemibold, color = Neutral900)
-                        Text(text = achievement.subtitle, style = PoppinsTinyRegular, color = Neutral600)
-                    }
-                    Spacer(modifier = Modifier.width(10.dp))
-                    Text(
-                        text = "$boundedCurrent/${achievement.target}",
-                        style = PoppinsTinyRegular,
-                        color = Neutral700
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .shadow(elevation = 4.dp, spotColor = Color(0x26000000), ambientColor = Color(0x26000000), shape = RoundedCornerShape(12.dp))
+                    .background(color = Color.White, shape = RoundedCornerShape(12.dp))
+                    .padding(10.dp)
+            ) {
+                if (achievement.imageRes != 0) {
+                    Icon(
+                        painter = painterResource(achievement.imageRes),
+                        contentDescription = achievement.title,
+                        modifier = Modifier
+                            .size(60.dp)
+                            .clip(RoundedCornerShape(10.dp)),
+                        tint = Color.Unspecified
                     )
                 }
-                LinearProgressIndicator(
-                    progress = {
-                        if (achievement.target <= 0) 0f
-                        else boundedCurrent.toFloat() / achievement.target.toFloat()
-                    },
-                    modifier = Modifier.fillMaxWidth(),
-                    color = Secondary500,
-                    trackColor = Neutral300
-                )
+
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(6.dp),
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Text(
+                        text = achievement.title,
+                        style = PoppinsRegularSemibold,
+                        color = Neutral900,
+                        maxLines = 1,
+                        overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+                    )
+                    Text(
+                        text = achievement.subtitle,
+                        style = PoppinsTinyRegular,
+                        color = Neutral600,
+                        maxLines = 1,
+                        overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+                    )
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .height(4.dp)
+                                .weight(1f)
+                                .background(color = Color(0xFFE0E0E0), shape = RoundedCornerShape(2.dp))
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth(boundedCurrent.toFloat() / achievement.target.toFloat())
+                                    .height(4.dp)
+                                    .background(color = Secondary500, shape = RoundedCornerShape(2.dp))
+                            )
+                        }
+                        Text(
+                            text = "$boundedCurrent/${achievement.target}",
+                            style = PoppinsTinyRegular,
+                            color = Neutral700
+                        )
+                    }
+                }
             }
         }
     }
@@ -845,8 +912,12 @@ private class ProfileReactiveRepository(
     private val firestore: FirebaseFirestore,
 ) {
     fun observeProfileState(uid: String, authEmail: String): Flow<ProfileUiState> {
-        return combine(observeUserDocument(uid), observeMaterialProgress(uid)) { userDoc, materials ->
-            userDoc.toProfileUiState(materials, authEmail)
+        return combine(
+            observeUserDocument(uid),
+            observeMaterialProgress(uid),
+            observeStreakData(uid)   // ← tambah stream streak langsung dari sub-koleksi
+        ) { userDoc, materials, streakFromFirestore ->
+            userDoc.toProfileUiState(materials, authEmail, streakFromFirestore)
         }
     }
 
@@ -928,11 +999,32 @@ private class ProfileReactiveRepository(
             }
         awaitClose { registration.remove() }
     }
+
+    // Observe sub-koleksi streaks/{uid} secara real-time
+    // Sumber data utama streak untuk ProfilScreen
+    private fun observeStreakData(uid: String): Flow<Int> = callbackFlow {
+        val streakRef = firestore.collection("users")
+            .document(uid)
+            .collection("streaks")
+            .document(uid)
+
+        val listener = streakRef.addSnapshotListener { snapshot, error ->
+            if (error != null) {
+                Log.w("ProfileReactiveRepository", "Failed to observe streak", error)
+                trySend(0)
+                return@addSnapshotListener
+            }
+            val current = (snapshot?.getLong("currentStreak") ?: 0L).toInt()
+            trySend(current)
+        }
+        awaitClose { listener.remove() }
+    }
 }
 
 private fun DocumentSnapshot?.toProfileUiState(
     materials: List<MaterialProgress>,
     authEmail: String,
+    streakFromFirestore: Int = 0,
 ): ProfileUiState {
     val doc = this
     val name = doc?.getString("name").orEmpty()
@@ -960,7 +1052,12 @@ private fun DocumentSnapshot?.toProfileUiState(
 
     val streakFromDoc = (doc?.getLong("streakCount") ?: 0L).toInt()
     val streakFromMaterials = calculateStreak(materials.map { it.completedAtMillis })
-    val streak = if (materials.isNotEmpty()) streakFromMaterials else streakFromDoc
+    // Prioritas: streakFromFirestore (sub-koleksi) > streakFromMaterials > streakFromDoc
+    val streak = when {
+        streakFromFirestore > 0 -> streakFromFirestore
+        materials.isNotEmpty() -> streakFromMaterials
+        else -> streakFromDoc
+    }
 
     val achievements = buildAchievements(completedMaterials, streak)
 
@@ -992,33 +1089,45 @@ private fun buildAchievements(materialCount: Int, streak: Int): List<Achievement
     return listOf(
         AchievementUi(
             title = "Perjalanan Pemula",
-            subtitle = "Selesaikan 1 materi pertama",
+            subtitle = "Selesaikan pelajaran pertama",
             current = materialCount,
-            target = 1
+            target = 1,
+            imageRes = com.kelompok2.scarla.R.drawable.achievement_1
         ),
         AchievementUi(
-            title = "Rajin Belajar",
-            subtitle = "Selesaikan 5 materi",
-            current = materialCount,
-            target = 5
-        ),
-        AchievementUi(
-            title = "Konsisten 3 Hari",
-            subtitle = "Pertahankan streak 3 hari",
+            title = "Bola Api",
+            subtitle = "Streak selama 3 hari",
             current = streak,
-            target = 3
+            target = 3,
+            imageRes = com.kelompok2.scarla.R.drawable.achievement_2
         ),
         AchievementUi(
-            title = "Konsisten 7 Hari",
-            subtitle = "Pertahankan streak 7 hari",
+            title = "Kembang Api",
+            subtitle = "Streak selama 14 hari",
             current = streak,
-            target = 7
+            target = 14,
+            imageRes = com.kelompok2.scarla.R.drawable.achievement_3
         ),
         AchievementUi(
-            title = "Explorer Materi",
-            subtitle = "Selesaikan 10 materi",
+            title = "Komet",
+            subtitle = "Streak selama 30 hari",
+            current = streak,
+            target = 30,
+            imageRes = com.kelompok2.scarla.R.drawable.achievement_4
+        ),
+        AchievementUi(
+            title = "Meteor",
+            subtitle = "Streak selama 2 bulan",
+            current = streak,
+            target = 60,
+            imageRes = com.kelompok2.scarla.R.drawable.achievement_5
+        ),
+        AchievementUi(
+            title = "Si Paling Ambis",
+            subtitle = "Menyelesaikan 10 pelajaran",
             current = materialCount,
-            target = 10
+            target = 10,
+            imageRes = com.kelompok2.scarla.R.drawable.achievement_6
         )
     )
 }

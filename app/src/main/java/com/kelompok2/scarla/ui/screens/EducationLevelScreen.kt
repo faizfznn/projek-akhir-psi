@@ -68,7 +68,6 @@ fun EducationLevelScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(AuthBackground)
             .verticalScroll(rememberScrollState())
             .padding(bottom = 24.dp)
     ) {

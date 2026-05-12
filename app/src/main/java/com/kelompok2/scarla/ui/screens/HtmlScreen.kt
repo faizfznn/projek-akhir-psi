@@ -26,6 +26,7 @@ import androidx.media3.common.MediaItem
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.ui.PlayerView
 import androidx.navigation.NavController
+import android.util.Log
 import com.kelompok2.scarla.R
 import kotlinx.coroutines.delay
 import androidx.compose.runtime.snapshots.SnapshotStateList
@@ -92,6 +93,14 @@ fun HtmlScreen(
     }
 
     val allFinished = finishedList.all { it }
+
+    // Release player saat component unmount
+    DisposableEffect(Unit) {
+        onDispose {
+            exoPlayer?.release()
+            exoPlayer = null
+        }
+    }
 
     Column(
         modifier = Modifier
@@ -180,34 +189,55 @@ fun HtmlScreen(
 
             } else {
 
-                DisposableEffect(selectedVideo) {
-
-                    exoPlayer?.release()
-
-                    exoPlayer =
-                        ExoPlayer.Builder(context).build().apply {
-
-                            val videoUri = Uri.parse(
-                                "android.resource://${context.packageName}/${selectedVideo}"
-                            )
-
-                            setMediaItem(MediaItem.fromUri(videoUri))
-                            prepare()
-                            seekTo(0)
-                            playWhenReady = true
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(Color.Black),
+                    contentAlignment = Alignment.Center
+                ) {
+                    var playerInitialized by remember { mutableStateOf(false) }
+                    
+                    DisposableEffect(selectedVideo) {
+                        try {
+                            exoPlayer?.release()
+                            exoPlayer = null
+                            
+                            exoPlayer = ExoPlayer.Builder(context).build().apply {
+                                val videoUri = Uri.parse(
+                                    "android.resource://${context.packageName}/${selectedVideo}"
+                                )
+                                Log.d("HtmlScreen", "Loading video URI: $videoUri")
+                                setMediaItem(MediaItem.fromUri(videoUri))
+                                prepare()
+                                playWhenReady = true
+                                playerInitialized = true
+                            }
+                        } catch (e: Exception) {
+                            Log.e("HtmlScreen", "Error initializing player: ${e.message}")
+                            playerInitialized = false
                         }
 
-                    onDispose { }
+                        onDispose {
+                            exoPlayer?.release()
+                            exoPlayer = null
+                        }
+                    }
+
+                    if (playerInitialized && exoPlayer != null) {
+                        AndroidView(
+                            factory = { ctx ->
+                                PlayerView(ctx).apply {
+                                    player = exoPlayer
+                                    useController = true
+                                    controllerShowTimeoutMs = 5000
+                                }
+                            },
+                            modifier = Modifier.fillMaxSize()
+                        )
+                    } else {
+                        CircularProgressIndicator(color = Color.White)
+                    }
                 }
-
-                AndroidView(
-                    factory = {
-                        PlayerView(context).apply {
-                            player = exoPlayer
-                        }
-                    },
-                    modifier = Modifier.fillMaxSize()
-                )
 
                 LaunchedEffect(selectedVideo, selectedIndex) {
                     delay(5000)
