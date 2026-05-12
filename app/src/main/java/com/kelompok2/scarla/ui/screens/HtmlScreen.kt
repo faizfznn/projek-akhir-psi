@@ -28,8 +28,7 @@ import androidx.media3.ui.PlayerView
 import androidx.navigation.NavController
 import com.kelompok2.scarla.R
 import kotlinx.coroutines.delay
-import androidx.compose.runtime.saveable.listSaver
-import androidx.compose.runtime.toMutableStateList
+import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.foundation.Image
 import androidx.compose.ui.res.painterResource
 import androidx.compose.material3.MaterialTheme
@@ -45,27 +44,14 @@ data class MateriItem(
 )
 
 @Composable
-fun HtmlScreen(navController: NavController) {
+fun HtmlScreen(
+    navController: NavController,
+    isQuizFinished: Boolean = false,
+    downloadedList: SnapshotStateList<Boolean>,
+    finishedList: SnapshotStateList<Boolean>
+) {
 
     val context = LocalContext.current
-
-    val downloadedList = rememberSaveable(
-        saver = listSaver(
-            save = { it.toList() },
-            restore = { it.toMutableStateList() }
-        )
-    ) {
-        mutableStateListOf(false, false, false)
-    }
-
-    val finishedList = rememberSaveable(
-        saver = listSaver(
-            save = { it.toList() },
-            restore = { it.toMutableStateList() }
-        )
-    ) {
-        mutableStateListOf(false, false, false)
-    }
 
     val materiList = listOf(
         MateriItem(
@@ -296,40 +282,31 @@ fun HtmlScreen(navController: NavController) {
 
                         Spacer(modifier = Modifier.width(8.dp))
 
-                        Button(
-                            enabled = downloadedList[index],
+                        AppButton(
+
+                            text = when {
+                                finishedList[index] -> "Selesai"
+                                downloadedList[index] -> "Mulai"
+                                else -> "Terkunci"
+                            },
+
                             onClick = {
                                 selectedIndex = index
 
                                 selectedVideo = null
                                 selectedVideo = item.videoRes
                             },
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor =
-                                    when {
-                                        finishedList[index] -> Success
-                                        downloadedList[index] -> Primary500
-                                        else -> Neutral500
-                                    }
-                            ),
-                            shape = RoundedCornerShape(12.dp)
-                        ) {
 
-                            Icon(
-                                imageVector = Icons.Default.PlayArrow,
-                                contentDescription = null
-                            )
+                            enabled = downloadedList[index],
 
-                            Spacer(modifier = Modifier.width(4.dp))
+                            modifier = Modifier.wrapContentWidth(),
 
-                            Text(
-                                when {
-                                    finishedList[index] -> "Finish"
-                                    downloadedList[index] -> "Mulai"
-                                    else -> "Locked"
-                                }
-                            )
-                        }
+                            buttonType = when {
+                                finishedList[index] -> ButtonType.SUCCESS
+                                downloadedList[index] -> ButtonType.PRIMARY
+                                else -> ButtonType.DISABLED
+                            }
+                        )
                     }
                 }
             }
@@ -366,16 +343,29 @@ fun HtmlScreen(navController: NavController) {
                         }
 
                         AppButton(
-                            text = "Mulai",
+
+                            text =
+                                if (isQuizFinished)
+                                    "Selesai"
+                                else
+                                    "Mulai",
+
                             onClick = {
-                                navController.navigate("quiz_html")
+
+                                if (!isQuizFinished) {
+                                    navController.navigate("quiz_html")
+                                }
                             },
 
                             enabled = allFinished,
 
                             modifier = Modifier.wrapContentWidth(),
 
-                            buttonType = ButtonType.PRIMARY
+                            buttonType =
+                                if (isQuizFinished)
+                                    ButtonType.SUCCESS
+                                else
+                                    ButtonType.PRIMARY
                         )
                     }
                 }

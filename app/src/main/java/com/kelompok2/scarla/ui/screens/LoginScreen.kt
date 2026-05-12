@@ -161,8 +161,8 @@ fun LoginScreen(
                 enabled = !isLoading,
                 onClick = {
                     isLoading = true
-                    email = "test@test.com"
-                    password = "123456"
+                    email = "tes@tes.com"
+                    password = "121212"
                     auth.signInWithEmailAndPassword(email, password)
                         .addOnCompleteListener { task ->
                             isLoading = false
