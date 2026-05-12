@@ -16,37 +16,12 @@ import com.google.firebase.firestore.FirebaseFirestore
 import com.kelompok2.scarla.firebase.FirestoreInitializer
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
-import com.kelompok2.scarla.ui.screens.AchievementPage
-import com.kelompok2.scarla.ui.screens.AuthChoiceScreen
-import com.kelompok2.scarla.ui.screens.BelajarScreen
-import com.kelompok2.scarla.ui.screens.EducationLevelScreen
-import com.kelompok2.scarla.ui.screens.EditAvatarScreen
-import com.kelompok2.scarla.ui.screens.EditInterestsScreen
-import com.kelompok2.scarla.ui.screens.EditMbtiScreen
-import com.kelompok2.scarla.ui.screens.EditProfileScreen
-import com.kelompok2.scarla.ui.screens.FriendRequestsScreen
-import com.kelompok2.scarla.ui.screens.InformatikaScreen
-import com.kelompok2.scarla.ui.screens.InterestsScreen
-import com.kelompok2.scarla.ui.screens.LoginScreen
-import com.kelompok2.scarla.ui.screens.MainScreen
-import com.kelompok2.scarla.ui.screens.MbtiScreen
-import com.kelompok2.scarla.ui.screens.OnboardingScreen
-import com.kelompok2.scarla.ui.screens.ProfileSetupScreen
-import com.kelompok2.scarla.ui.screens.ProfilScreen
-import com.kelompok2.scarla.ui.screens.ScreenStreak
-import com.kelompok2.scarla.ui.screens.SettingsScreen
-import com.kelompok2.scarla.ui.screens.SignupScreen
-import com.kelompok2.scarla.ui.screens.SplashScreen
-import com.kelompok2.scarla.ui.screens.HtmlScreen
-import com.kelompok2.scarla.ui.screens.QuizHtmlScreen
+import com.kelompok2.scarla.ui.screens.*
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.saveable.listSaver
 import androidx.compose.runtime.toMutableStateList
 import androidx.compose.runtime.saveable.rememberSaveable
-
-import com.kelompok2.scarla.ui.screens.ChatPage
-import com.kelompok2.scarla.ui.screens.ChatRoomPage
 
 private val firestore by lazy { FirebaseFirestore.getInstance() }
 
