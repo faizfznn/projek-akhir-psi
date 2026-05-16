@@ -55,6 +55,13 @@ sealed class Screen(val route: String) {
             return "chat_room/$peerUid/$encodedName"
         }
     }
+    object KomunitasRoom : Screen("komunitas_room/{communityName}/{channelName}") {
+        fun createRoute(communityName: String, channelName: String): String {
+            val encodedCommunity = java.net.URLEncoder.encode(communityName, "UTF-8")
+            val encodedChannel = java.net.URLEncoder.encode(channelName, "UTF-8")
+            return "komunitas_room/$encodedCommunity/$encodedChannel"
+        }
+    }
     object PeerProfile : Screen("peer_profile/{peerUid}") {
         fun createRoute(peerUid: String) = "peer_profile/$peerUid"
     }
@@ -350,6 +357,23 @@ fun AppNavigation() {
             ChatRoomPage(
                 peerUid = peerUid,
                 peerName = peerName,
+                navController = navController
+            )
+        }
+
+        // ── Komunitas Room ─────────────────────────────────────────────
+        composable(
+            route = Screen.KomunitasRoom.route,
+            arguments = listOf(
+                androidx.navigation.navArgument("communityName") { type = androidx.navigation.NavType.StringType },
+                androidx.navigation.navArgument("channelName") { type = androidx.navigation.NavType.StringType }
+            )
+        ) { backStackEntry ->
+            val communityName = backStackEntry.arguments?.getString("communityName") ?: ""
+            val channelName = backStackEntry.arguments?.getString("channelName") ?: ""
+            KomunitasRoomPage(
+                communityName = java.net.URLDecoder.decode(communityName, "UTF-8"),
+                channelName = java.net.URLDecoder.decode(channelName, "UTF-8"),
                 navController = navController
             )
         }
