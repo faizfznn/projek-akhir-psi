@@ -5,9 +5,10 @@ import androidx.compose.animation.AnimatedContentTransitionScope
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
@@ -15,32 +16,12 @@ import com.google.firebase.firestore.FirebaseFirestore
 import com.kelompok2.scarla.firebase.FirestoreInitializer
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
-import com.kelompok2.scarla.ui.screens.AchievementPage
-import com.kelompok2.scarla.ui.screens.AuthChoiceScreen
-import com.kelompok2.scarla.ui.screens.BelajarScreen
-import com.kelompok2.scarla.ui.screens.EducationLevelScreen
-import com.kelompok2.scarla.ui.screens.EditAvatarScreen
-import com.kelompok2.scarla.ui.screens.EditInterestsScreen
-import com.kelompok2.scarla.ui.screens.EditMbtiScreen
-import com.kelompok2.scarla.ui.screens.EditProfileScreen
-import com.kelompok2.scarla.ui.screens.FriendRequestsScreen
-import com.kelompok2.scarla.ui.screens.InformatikaScreen
-import com.kelompok2.scarla.ui.screens.InterestsScreen
-import com.kelompok2.scarla.ui.screens.LoginScreen
-import com.kelompok2.scarla.ui.screens.MainScreen
-import com.kelompok2.scarla.ui.screens.MbtiScreen
-import com.kelompok2.scarla.ui.screens.OnboardingScreen
-import com.kelompok2.scarla.ui.screens.ProfileSetupScreen
-import com.kelompok2.scarla.ui.screens.ProfilScreen
-import com.kelompok2.scarla.ui.screens.ScreenStreak
-import com.kelompok2.scarla.ui.screens.SettingsScreen
-import com.kelompok2.scarla.ui.screens.SignupScreen
-import com.kelompok2.scarla.ui.screens.SplashScreen
-import com.kelompok2.scarla.ui.screens.HtmlScreen
-import com.kelompok2.scarla.ui.screens.QuizHtmlScreen
-import com.kelompok2.scarla.ui.screens.ChatPage
-import com.kelompok2.scarla.ui.screens.ChatRoomPage
-import com.kelompok2.scarla.ui.screens.KomunitasRoomPage
+import com.kelompok2.scarla.ui.screens.*
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.saveable.listSaver
+import androidx.compose.runtime.toMutableStateList
+import androidx.compose.runtime.saveable.rememberSaveable
 
 private val firestore by lazy { FirebaseFirestore.getInstance() }
 
@@ -90,6 +71,29 @@ sealed class Screen(val route: String) {
 fun AppNavigation() {
     val navController = rememberNavController()
     val scope = rememberCoroutineScope()
+
+    var htmlQuizFinished by rememberSaveable {
+        mutableStateOf(false)
+    }
+
+    val htmlDownloadedList = rememberSaveable(
+        saver = listSaver(
+            save = { it.toList() },
+            restore = { it.toMutableStateList() }
+        )
+    ) {
+        mutableStateListOf(false, false, false)
+    }
+
+    val htmlFinishedList = rememberSaveable(
+        saver = listSaver(
+            save = { it.toList() },
+            restore = { it.toMutableStateList() }
+        )
+    ) {
+        mutableStateListOf(false, false, false)
+    }
+
 
     NavHost(
         navController = navController,
@@ -309,11 +313,23 @@ fun AppNavigation() {
         }
 
         composable("html_screen") {
-            HtmlScreen(navController = navController)
+            HtmlScreen(
+                navController = navController,
+                isQuizFinished = htmlQuizFinished,
+                downloadedList = htmlDownloadedList,
+                finishedList = htmlFinishedList
+            )
         }
 
         composable("quiz_html") {
-            QuizHtmlScreen(navController = navController)
+
+            QuizHtmlScreen(
+                navController = navController,
+
+                onQuizFinished = {
+                    htmlQuizFinished = true
+                }
+            )
         }
 
         composable(Screen.Achievement.route) {

@@ -17,7 +17,9 @@ import com.kelompok2.scarla.ui.theme.*
 enum class ButtonType {
     PRIMARY,
     SECONDARY,
-    TERTIARY
+    TERTIARY,
+    SUCCESS,
+    DISABLED
 }
 
 @Composable
@@ -50,6 +52,20 @@ fun AppButton(
             contentColor = Primary500,
             disabledContainerColor = Color.Transparent,
             disabledContentColor = Neutral400
+        )
+
+        ButtonType.SUCCESS -> ButtonDefaults.buttonColors(
+            containerColor = Success,
+            contentColor = Neutral50,
+            disabledContainerColor = Success.copy(alpha = 0.5f),
+            disabledContentColor = Neutral50
+        )
+
+        ButtonType.DISABLED -> ButtonDefaults.buttonColors(
+            containerColor = Neutral500,
+            contentColor = Neutral50,
+            disabledContainerColor = Neutral500,
+            disabledContentColor = Neutral50
         )
     }
 

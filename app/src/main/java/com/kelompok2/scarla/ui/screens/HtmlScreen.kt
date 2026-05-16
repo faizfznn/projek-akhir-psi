@@ -29,8 +29,7 @@ import androidx.navigation.NavController
 import android.util.Log
 import com.kelompok2.scarla.R
 import kotlinx.coroutines.delay
-import androidx.compose.runtime.saveable.listSaver
-import androidx.compose.runtime.toMutableStateList
+import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.foundation.Image
 import androidx.compose.ui.res.painterResource
 import androidx.compose.material3.MaterialTheme
@@ -46,27 +45,14 @@ data class MateriItem(
 )
 
 @Composable
-fun HtmlScreen(navController: NavController) {
+fun HtmlScreen(
+    navController: NavController,
+    isQuizFinished: Boolean = false,
+    downloadedList: SnapshotStateList<Boolean>,
+    finishedList: SnapshotStateList<Boolean>
+) {
 
     val context = LocalContext.current
-
-    val downloadedList = rememberSaveable(
-        saver = listSaver(
-            save = { it.toList() },
-            restore = { it.toMutableStateList() }
-        )
-    ) {
-        mutableStateListOf(false, false, false)
-    }
-
-    val finishedList = rememberSaveable(
-        saver = listSaver(
-            save = { it.toList() },
-            restore = { it.toMutableStateList() }
-        )
-    ) {
-        mutableStateListOf(false, false, false)
-    }
 
     val materiList = listOf(
         MateriItem(
@@ -102,8 +88,8 @@ fun HtmlScreen(navController: NavController) {
         mutableStateOf(false)
     }
 
-    var exoPlayer by remember {
-        mutableStateOf<ExoPlayer?>(null)
+    val exoPlayer = remember {
+        ExoPlayer.Builder(context).build()
     }
 
     val allFinished = finishedList.all { it }
@@ -111,8 +97,7 @@ fun HtmlScreen(navController: NavController) {
     // Release player saat component unmount
     DisposableEffect(Unit) {
         onDispose {
-            exoPlayer?.release()
-            exoPlayer = null
+            exoPlayer.release()
         }
     }
 
@@ -209,35 +194,23 @@ fun HtmlScreen(navController: NavController) {
                         .background(Color.Black),
                     contentAlignment = Alignment.Center
                 ) {
-                    var playerInitialized by remember { mutableStateOf(false) }
-                    
-                    DisposableEffect(selectedVideo) {
-                        try {
-                            exoPlayer?.release()
-                            exoPlayer = null
+                    LaunchedEffect(selectedVideo) {
+                        selectedVideo?.let { resId ->
+                            val videoUri = Uri.parse(
+                                "android.resource://${context.packageName}/${resId}"
+                            )
+                            Log.d("HtmlScreen", "Loading video URI: $videoUri")
                             
-                            exoPlayer = ExoPlayer.Builder(context).build().apply {
-                                val videoUri = Uri.parse(
-                                    "android.resource://${context.packageName}/${selectedVideo}"
-                                )
-                                Log.d("HtmlScreen", "Loading video URI: $videoUri")
-                                setMediaItem(MediaItem.fromUri(videoUri))
-                                prepare()
-                                playWhenReady = true
-                                playerInitialized = true
-                            }
-                        } catch (e: Exception) {
-                            Log.e("HtmlScreen", "Error initializing player: ${e.message}")
-                            playerInitialized = false
-                        }
-
-                        onDispose {
-                            exoPlayer?.release()
-                            exoPlayer = null
+                            exoPlayer.stop()
+                            exoPlayer.clearMediaItems()
+                            
+                            exoPlayer.setMediaItem(MediaItem.fromUri(videoUri))
+                            exoPlayer.prepare()
+                            exoPlayer.playWhenReady = true
                         }
                     }
 
-                    if (playerInitialized && exoPlayer != null) {
+                    key(selectedVideo) {
                         AndroidView(
                             factory = { ctx ->
                                 PlayerView(ctx).apply {
@@ -246,15 +219,16 @@ fun HtmlScreen(navController: NavController) {
                                     controllerShowTimeoutMs = 5000
                                 }
                             },
+                            update = { playerView ->
+                                playerView.player = exoPlayer
+                            },
                             modifier = Modifier.fillMaxSize()
                         )
-                    } else {
-                        CircularProgressIndicator(color = Color.White)
                     }
                 }
 
                 LaunchedEffect(selectedVideo, selectedIndex) {
-                    delay(5000)
+                    delay(2000)
 
                     if (selectedIndex != -1) {
                         finishedList[selectedIndex] = true
@@ -326,40 +300,31 @@ fun HtmlScreen(navController: NavController) {
 
                         Spacer(modifier = Modifier.width(8.dp))
 
-                        Button(
-                            enabled = downloadedList[index],
+                        AppButton(
+
+                            text = when {
+                                finishedList[index] -> "Selesai"
+                                downloadedList[index] -> "Mulai"
+                                else -> "Terkunci"
+                            },
+
                             onClick = {
                                 selectedIndex = index
 
                                 selectedVideo = null
                                 selectedVideo = item.videoRes
                             },
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor =
-                                    when {
-                                        finishedList[index] -> Success
-                                        downloadedList[index] -> Primary500
-                                        else -> Neutral500
-                                    }
-                            ),
-                            shape = RoundedCornerShape(12.dp)
-                        ) {
 
-                            Icon(
-                                imageVector = Icons.Default.PlayArrow,
-                                contentDescription = null
-                            )
+                            enabled = downloadedList[index],
 
-                            Spacer(modifier = Modifier.width(4.dp))
+                            modifier = Modifier.wrapContentWidth(),
 
-                            Text(
-                                when {
-                                    finishedList[index] -> "Finish"
-                                    downloadedList[index] -> "Mulai"
-                                    else -> "Locked"
-                                }
-                            )
-                        }
+                            buttonType = when {
+                                finishedList[index] -> ButtonType.SUCCESS
+                                downloadedList[index] -> ButtonType.PRIMARY
+                                else -> ButtonType.DISABLED
+                            }
+                        )
                     }
                 }
             }
@@ -396,16 +361,29 @@ fun HtmlScreen(navController: NavController) {
                         }
 
                         AppButton(
-                            text = "Mulai",
+
+                            text =
+                                if (isQuizFinished)
+                                    "Selesai"
+                                else
+                                    "Mulai",
+
                             onClick = {
-                                navController.navigate("quiz_html")
+
+                                if (!isQuizFinished) {
+                                    navController.navigate("quiz_html")
+                                }
                             },
 
                             enabled = allFinished,
 
                             modifier = Modifier.wrapContentWidth(),
 
-                            buttonType = ButtonType.PRIMARY
+                            buttonType =
+                                if (isQuizFinished)
+                                    ButtonType.SUCCESS
+                                else
+                                    ButtonType.PRIMARY
                         )
                     }
                 }
