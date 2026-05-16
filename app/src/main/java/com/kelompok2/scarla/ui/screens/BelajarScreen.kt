@@ -94,8 +94,8 @@ fun BelajarScreen(navController: NavController) {
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(12.dp)
-                .shadow(6.dp, RoundedCornerShape(20.dp)),
-            shape = RoundedCornerShape(20.dp),
+                .shadow(6.dp, RoundedCornerShape(12.dp)),
+            shape = RoundedCornerShape(12.dp),
             colors = CardDefaults.cardColors(
                 containerColor = Color(0xFFEAEAEA)
             )
@@ -156,7 +156,7 @@ fun SubjectCard(
         modifier = Modifier
             .height(200.dp) // Sedikit ditambah tingginya agar tidak terlalu sesak
             .clickable { onClick() },
-        shape = RoundedCornerShape(18.dp),
+        shape = RoundedCornerShape(12.dp),
         elevation = CardDefaults.cardElevation(4.dp),
         colors = CardDefaults.cardColors(containerColor = Neutral50)
     ) {
