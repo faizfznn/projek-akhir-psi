@@ -213,7 +213,7 @@ fun QuizHtmlScreen(
             // PERTANYAAN DI LUAR CARD
             Text(
                 text = question.question,
-                style = MaterialTheme.typography.displaySmall,
+                style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.ExtraBold,
             )
 

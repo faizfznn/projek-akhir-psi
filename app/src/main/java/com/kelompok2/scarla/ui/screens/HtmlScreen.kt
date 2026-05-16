@@ -88,8 +88,8 @@ fun HtmlScreen(
         mutableStateOf(false)
     }
 
-    var exoPlayer by remember {
-        mutableStateOf<ExoPlayer?>(null)
+    val exoPlayer = remember {
+        ExoPlayer.Builder(context).build()
     }
 
     val allFinished = finishedList.all { it }
@@ -97,8 +97,7 @@ fun HtmlScreen(
     // Release player saat component unmount
     DisposableEffect(Unit) {
         onDispose {
-            exoPlayer?.release()
-            exoPlayer = null
+            exoPlayer.release()
         }
     }
 
@@ -195,35 +194,23 @@ fun HtmlScreen(
                         .background(Color.Black),
                     contentAlignment = Alignment.Center
                 ) {
-                    var playerInitialized by remember { mutableStateOf(false) }
-                    
-                    DisposableEffect(selectedVideo) {
-                        try {
-                            exoPlayer?.release()
-                            exoPlayer = null
+                    LaunchedEffect(selectedVideo) {
+                        selectedVideo?.let { resId ->
+                            val videoUri = Uri.parse(
+                                "android.resource://${context.packageName}/${resId}"
+                            )
+                            Log.d("HtmlScreen", "Loading video URI: $videoUri")
                             
-                            exoPlayer = ExoPlayer.Builder(context).build().apply {
-                                val videoUri = Uri.parse(
-                                    "android.resource://${context.packageName}/${selectedVideo}"
-                                )
-                                Log.d("HtmlScreen", "Loading video URI: $videoUri")
-                                setMediaItem(MediaItem.fromUri(videoUri))
-                                prepare()
-                                playWhenReady = true
-                                playerInitialized = true
-                            }
-                        } catch (e: Exception) {
-                            Log.e("HtmlScreen", "Error initializing player: ${e.message}")
-                            playerInitialized = false
-                        }
-
-                        onDispose {
-                            exoPlayer?.release()
-                            exoPlayer = null
+                            exoPlayer.stop()
+                            exoPlayer.clearMediaItems()
+                            
+                            exoPlayer.setMediaItem(MediaItem.fromUri(videoUri))
+                            exoPlayer.prepare()
+                            exoPlayer.playWhenReady = true
                         }
                     }
 
-                    if (playerInitialized && exoPlayer != null) {
+                    key(selectedVideo) {
                         AndroidView(
                             factory = { ctx ->
                                 PlayerView(ctx).apply {
@@ -232,15 +219,16 @@ fun HtmlScreen(
                                     controllerShowTimeoutMs = 5000
                                 }
                             },
+                            update = { playerView ->
+                                playerView.player = exoPlayer
+                            },
                             modifier = Modifier.fillMaxSize()
                         )
-                    } else {
-                        CircularProgressIndicator(color = Color.White)
                     }
                 }
 
                 LaunchedEffect(selectedVideo, selectedIndex) {
-                    delay(5000)
+                    delay(2000)
 
                     if (selectedIndex != -1) {
                         finishedList[selectedIndex] = true
