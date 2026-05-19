@@ -227,6 +227,9 @@ fun ProfileSetupScreen(
 
             if (datePickerVisible) {
                 val datePickerState = rememberDatePickerState(initialSelectedDateMillis = birthDateMillis)
+                val selectedDateHeadline = datePickerState.selectedDateMillis?.let {
+                    java.text.SimpleDateFormat("dd MMMM yyyy", Locale("id", "ID")).format(Date(it))
+                } ?: "Pilih tanggal lahir"
 
                 DatePickerDialog(
                     onDismissRequest = { datePickerVisible = false },
@@ -260,7 +263,12 @@ fun ProfileSetupScreen(
                                 modifier = Modifier.padding(start = 24.dp, top = 16.dp)
                             )
                         },
-                        headline = null,
+                        headline = {
+                            Text(
+                                text = selectedDateHeadline,
+                                modifier = Modifier.padding(start = 24.dp, end = 24.dp, top = 8.dp)
+                            )
+                        },
                         showModeToggle = false
                     )
                 }

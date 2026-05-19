@@ -609,6 +609,9 @@ private fun EditProfileDialog(
 
     if (datePickerVisible) {
         val datePickerState = rememberDatePickerState(initialSelectedDateMillis = birthDateMillis)
+        val selectedDateHeadline = datePickerState.selectedDateMillis?.let {
+            SimpleDateFormat("dd MMMM yyyy", Locale("id", "ID")).format(Date(it))
+        } ?: "Pilih tanggal lahir"
 
         DatePickerDialog(
             onDismissRequest = { datePickerVisible = false },
@@ -636,6 +639,12 @@ private fun EditProfileDialog(
         ) {
             DatePicker(
                 state = datePickerState,
+                    title = {
+                        Text("Pilih tanggal lahir")
+                    },
+                    headline = {
+                        Text(selectedDateHeadline)
+                    },
                 showModeToggle = false
             )
         }
