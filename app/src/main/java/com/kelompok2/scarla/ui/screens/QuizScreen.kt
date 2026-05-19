@@ -1,6 +1,5 @@
 package com.kelompok2.scarla.ui.screens
 
-import com.kelompok2.scarla.ui.theme.*
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -16,122 +15,124 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
-import androidx.navigation.compose.rememberNavController
 import com.kelompok2.scarla.ui.components.*
 import androidx.compose.foundation.Image
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import com.kelompok2.scarla.R
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.setValue
-
-data class QuizQuestion(
-    val question: String,
-    val options: List<String>,
-    val answer: String
-)
+import com.kelompok2.scarla.ui.theme.*
+import com.kelompok2.scarla.network.RetrofitClient
+import com.kelompok2.scarla.network.QuizData
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.SetOptions
+import com.google.firebase.firestore.FieldValue
 
 @Composable
-fun QuizHtmlScreen(
+fun QuizScreen(
     navController: NavController,
-    onQuizFinished: () -> Unit
+    materialId: String,
+    quizId: String
 ) {
+    var quizData by remember { mutableStateOf<QuizData?>(null) }
+    var isLoading by remember { mutableStateOf(true) }
+    var error by remember { mutableStateOf<String?>(null) }
 
-    val questions = listOf(
+    var currentQuestion by remember { mutableStateOf(0) }
+    var selectedAnswer by remember { mutableStateOf("") }
+    
+    val answers = remember { mutableStateListOf<String>() }
+    val submitted = remember { mutableStateListOf<Boolean>() }
+    var isFinished by remember { mutableStateOf(false) }
 
-            QuizQuestion(
-                "HTML adalah...",
-                listOf(
-                    "Bahasa pemrograman",
-                    "Markup language",
-                    "Database",
-                    "Framework"
-                ),
-                "Markup language"
-            ),
-
-        QuizQuestion(
-            "Tag untuk paragraf adalah...",
-            listOf("<p>", "<h1>", "<div>", "<a>"),
-            "<p>"
-        ),
-
-        QuizQuestion(
-            "Tag heading terbesar?",
-            listOf("h6", "h4", "h1", "h2"),
-            "h1"
-        ),
-
-        QuizQuestion(
-            "Tag link HTML?",
-            listOf("<a>", "<img>", "<p>", "<ul>"),
-            "<a>"
-        ),
-
-        QuizQuestion(
-            "HTML digunakan untuk?",
-            listOf(
-                "Membuat tampilan web",
-                "AI",
-                "Database",
-                "Game engine"
-            ),
-            "Membuat tampilan web"
-        )
-    )
-
-    var currentQuestion by remember {
-        mutableStateOf(0)
+    LaunchedEffect(quizId) {
+        try {
+            isLoading = true
+            val response = RetrofitClient.instance.getQuiz(quizId)
+            if (response.success) {
+                quizData = response.data
+                
+                answers.clear()
+                submitted.clear()
+                response.data.questions.forEach { _ ->
+                    answers.add("")
+                    submitted.add(false)
+                }
+            } else {
+                error = response.message ?: "Gagal memuat quiz"
+            }
+        } catch (e: Exception) {
+            error = e.localizedMessage ?: "Terjadi kesalahan"
+        } finally {
+            isLoading = false
+        }
     }
 
-    // jawaban sementara sebelum submit
-    var selectedAnswer by remember {
-        mutableStateOf("")
+    if (isLoading) {
+        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            CircularProgressIndicator()
+        }
+        return
     }
 
-    // jawaban final tiap soal
-    val answers = remember {
-        mutableStateListOf("", "", "", "", "")
+    if (error != null || quizData == null) {
+        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            Text(text = error ?: "Quiz tidak ditemukan")
+        }
+        return
     }
 
-    // status submit tiap soal
-    val submitted = remember {
-        mutableStateListOf(false, false, false, false, false)
-    }
-
-    val question = questions[currentQuestion]
-
-    // kalau pernah jawab sebelumnya
-    selectedAnswer = answers[currentQuestion]
-
-    val progress =
-        (currentQuestion + 1).toFloat() / questions.size.toFloat()
-
-    var isFinished by remember {
-        mutableStateOf(false)
-    }
+    val questions = quizData!!.questions
 
     if (isFinished) {
-
         val correctCount = questions.filterIndexed { index, quiz ->
-            answers[index] == quiz.answer
+            answers[index] == quiz.correctAnswer
         }.size
 
         val wrongCount = questions.size - correctCount
 
+        val score = Math.round((correctCount.toFloat() / questions.size) * 100)
+        val isPassed = score >= quizData!!.passingScore
+
+        LaunchedEffect(isPassed) {
+            val uid = FirebaseAuth.getInstance().currentUser?.uid
+            if (uid != null) {
+                val firestore = FirebaseFirestore.getInstance()
+                val userRef = firestore.collection("users").document(uid)
+                
+                val materialData = mapOf(
+                    "subject" to quizData!!.title,
+                    "quizPassed" to isPassed,
+                    "quizFailed" to !isPassed,
+                    "completedAt" to com.google.firebase.Timestamp.now()
+                )
+                userRef.collection("materials").document(materialId).set(materialData, SetOptions.merge())
+
+                if (isPassed) {
+                    com.kelompok2.scarla.firebase.FirestoreInitializer.recordLessonCompleted(materialId, quizData!!.title)
+                }
+            }
+        }
+
         ResultScreen(
             correct = correctCount,
             wrong = wrongCount,
+            passingScore = quizData!!.passingScore,
+            totalQuestions = quizData!!.totalQuestions,
             onBack = {
-                onQuizFinished()
                 navController.popBackStack()
             }
         )
-
     } else {
+        val question = questions[currentQuestion]
+
+        // Sinkronisasi dengan jawaban sebelumnya
+        selectedAnswer = answers[currentQuestion]
+
+        val progress = (currentQuestion + 1).toFloat() / questions.size.toFloat()
+
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -140,26 +141,13 @@ fun QuizHtmlScreen(
         ) {
 
             // HEADER
-            Row(
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-
-                IconButton(
-                    onClick = {
-                        navController.popBackStack()
-                    }
-                ) {
-
-                    Icon(
-                        imageVector = Icons.Default.ArrowBack,
-                        contentDescription = null
-                    )
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                IconButton(onClick = { navController.popBackStack() }) {
+                    Icon(imageVector = Icons.Default.ArrowBack, contentDescription = null)
                 }
-
                 Spacer(modifier = Modifier.width(8.dp))
-
                 Text(
-                    text = "Quiz HTML",
+                    text = quizData!!.title,
                     style = MaterialTheme.typography.headlineSmall,
                     fontWeight = FontWeight.Bold
                 )
@@ -171,37 +159,25 @@ fun QuizHtmlScreen(
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(12.dp),
-                colors = CardDefaults.cardColors(
-                    containerColor = Neutral50                )
+                colors = CardDefaults.cardColors(containerColor = Neutral50)
             ) {
-
-                Column(
-                    modifier = Modifier.padding(16.dp)
-                ) {
-
+                Column(modifier = Modifier.padding(16.dp)) {
                     Row(
                         modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement =
-                            Arrangement.SpaceBetween
+                        horizontalArrangement = Arrangement.SpaceBetween
                     ) {
-
                         Text(
                             text = "Soal ${currentQuestion + 1}/${questions.size}",
                             fontWeight = FontWeight.Bold
                         )
-
-                        Text(
-                            text = "${((progress) * 100).toInt()}%"
-                        )
+                        Text(text = "${((progress) * 100).toInt()}%")
                     }
 
                     Spacer(modifier = Modifier.height(10.dp))
 
                     LinearProgressIndicator(
                         progress = { progress },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(8.dp),
+                        modifier = Modifier.fillMaxWidth().height(8.dp),
                         color = Primary500,
                         trackColor = Neutral200
                     )
@@ -225,32 +201,25 @@ fun QuizHtmlScreen(
                     .fillMaxWidth()
                     .weight(1f),
                 shape = RoundedCornerShape(12.dp),
-                colors = CardDefaults.cardColors(
-                    containerColor = Tertiary300
-                ),
+                colors = CardDefaults.cardColors(containerColor = Tertiary300),
                 border = BorderStroke(2.dp, Primary1000)
             ) {
-
                 Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(20.dp),
+                    modifier = Modifier.fillMaxSize().padding(20.dp),
                     verticalArrangement = Arrangement.Top
                 ) {
-
                     Column {
-
                         question.options.forEach { option ->
-
                             val isSelected = selectedAnswer == option
                             val isSubmitted = submitted[currentQuestion]
-                            val isCorrect = option == question.answer
-                            val isWrong = isSelected && option != question.answer
+                            val isCorrect = option == question.correctAnswer
+                            val isWrong = isSelected && option != question.correctAnswer
 
                             val backgroundColor = when {
                                 isSubmitted && isCorrect -> Success
                                 isSubmitted && isWrong -> Error
-                                else -> Neutral50                            }
+                                else -> Neutral50
+                            }
 
                             val cardBorder = when {
                                 isSubmitted && isCorrect -> BorderStroke(2.dp, Success)
@@ -271,7 +240,7 @@ fun QuizHtmlScreen(
                                 shape = RoundedCornerShape(12.dp),
                                 colors = CardDefaults.cardColors(containerColor = backgroundColor),
                                 border = cardBorder,
-                                elevation = CardDefaults.cardElevation(defaultElevation = elevationValue) // Menerapkan shadow dinamis
+                                elevation = CardDefaults.cardElevation(defaultElevation = elevationValue)
                             ) {
                                 Row(
                                     modifier = Modifier.fillMaxWidth().padding(16.dp),
@@ -281,23 +250,24 @@ fun QuizHtmlScreen(
                                         text = option,
                                         modifier = Modifier.weight(1f),
                                         style = MaterialTheme.typography.bodyLarge,
-                                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.SemiBold, // Teks menebal saat dipilih
-                                        color = if (isSubmitted && (isCorrect || isWrong)) Color.White else Neutral900                                    )
+                                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.SemiBold,
+                                        color = if (isSubmitted && (isCorrect || isWrong)) Color.White else Neutral900
+                                    )
 
                                     if (isSubmitted && isCorrect) {
-
                                         Icon(
                                             imageVector = Icons.Default.CheckCircle,
                                             contentDescription = null,
-                                            tint = Neutral50                                        )
+                                            tint = Neutral50
+                                        )
                                     }
 
                                     if (isSubmitted && isWrong) {
-
                                         Icon(
                                             imageVector = Icons.Default.Close,
                                             contentDescription = null,
-                                            tint = Neutral50                                        )
+                                            tint = Neutral50
+                                        )
                                     }
                                 }
                             }
@@ -309,23 +279,37 @@ fun QuizHtmlScreen(
                     // SUBMIT BUTTON
                     AppButton(
                         text = "Submit Jawaban",
-
                         onClick = {
-
-                            answers[currentQuestion] =
-                                selectedAnswer
-
+                            answers[currentQuestion] = selectedAnswer
                             submitted[currentQuestion] = true
                         },
-
-                        enabled =
-                            selectedAnswer.isNotEmpty()
-                                    && !submitted[currentQuestion],
-
+                        enabled = selectedAnswer.isNotEmpty() && !submitted[currentQuestion],
                         modifier = Modifier.fillMaxWidth(),
-
                         buttonType = ButtonType.PRIMARY
                     )
+
+                    if (submitted[currentQuestion]) {
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Card(
+                            modifier = Modifier.fillMaxWidth(),
+                            colors = CardDefaults.cardColors(containerColor = Neutral50),
+                            border = BorderStroke(1.dp, Primary500)
+                        ) {
+                            Column(modifier = Modifier.padding(16.dp)) {
+                                Text(
+                                    text = "Penjelasan:",
+                                    fontWeight = FontWeight.Bold,
+                                    color = Primary1000
+                                )
+                                Spacer(modifier = Modifier.height(6.dp))
+                                Text(
+                                    text = question.explanation,
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = Neutral900
+                                )
+                            }
+                        }
+                    }
                 }
             }
 
@@ -334,52 +318,33 @@ fun QuizHtmlScreen(
             // PREV NEXT PALING BAWAH
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement =
-                    Arrangement.SpaceBetween
+                horizontalArrangement = Arrangement.SpaceBetween
             ) {
-
                 AppButton(
                     text = "Previous",
                     onClick = {
-
                         if (currentQuestion > 0) {
                             currentQuestion--
                         }
                     },
                     enabled = currentQuestion != 0,
-
-                    modifier = Modifier
-                        .weight(1f),
-
+                    modifier = Modifier.weight(1f),
                     buttonType = ButtonType.SECONDARY
                 )
 
                 Spacer(modifier = Modifier.width(12.dp))
 
                 AppButton(
-
-                    text =
-                        if (currentQuestion == questions.lastIndex)
-                            "Finish"
-                        else
-                            "Next",
-
+                    text = if (currentQuestion == questions.lastIndex) "Finish" else "Next",
                     onClick = {
-
                         if (currentQuestion < questions.lastIndex) {
-
                             currentQuestion++
-
                         } else {
-
                             isFinished = true
                         }
                     },
-
                     enabled = submitted[currentQuestion],
-
                     modifier = Modifier.weight(1f),
-
                     buttonType = ButtonType.PRIMARY
                 )
             }
@@ -388,34 +353,16 @@ fun QuizHtmlScreen(
 }
 
 @Composable
-fun ResultScreen(correct: Int, wrong: Int, onBack: () -> Unit) {
+fun ResultScreen(correct: Int, wrong: Int, passingScore: Int, totalQuestions: Int, onBack: () -> Unit) {
+    val score = Math.round((correct.toFloat() / totalQuestions) * 100)
+    val isPassed = score >= passingScore
 
-    val messageTitle = when {
-        correct >= 4 -> "Kerja Bagus!"
-        correct >= 2 -> "Terus Belajar!"
-        correct == 1 -> "Jangan Menyerah!"
-        else -> "Coba Lagi!"
-    }
-
-    val resultImage = when {
-        correct >= 4 -> R.drawable.ic_excellent
-        correct >= 2 -> R.drawable.ic_keep_learning
-        else -> R.drawable.ic_try_again
-    }
-
-    val messageDesc = when {
-        correct >= 4 ->
-            "Kamu sudah memahami materi dengan sangat baik. Pertahankan semangat belajarmu!"
-
-        correct >= 2 ->
-            "Hasilmu sudah cukup bagus, tapi masih ada beberapa materi yang perlu dipelajari lagi."
-
-        correct == 1 ->
-            "Kamu sudah berusaha dengan baik. Coba ulangi materinya pelan-pelan lalu kerjakan quiz lagi yaa!"
-
-        else ->
-            "Belum ada jawaban yang benar. Yuk pelajari lagi materinya dan coba sekali lagi!!"
-    }
+    val messageTitle = if (isPassed) "Kerja Bagus!" else "Coba Lagi!"
+    val resultImage = if (isPassed) R.drawable.ic_excellent else R.drawable.ic_try_again
+    val messageDesc = if (isPassed) 
+        "Kamu sudah memahami materi dengan sangat baik. Pertahankan semangat belajarmu!" 
+    else 
+        "Belum ada jawaban yang benar atau nilai masih di bawah standar. Yuk pelajari lagi materinya!"
 
     Column(
         modifier = Modifier
@@ -428,11 +375,9 @@ fun ResultScreen(correct: Int, wrong: Int, onBack: () -> Unit) {
             modifier = Modifier
                 .weight(1f)
                 .fillMaxWidth(),
-
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
-
             Image(
                 painter = painterResource(id = resultImage),
                 contentDescription = null,
@@ -462,7 +407,6 @@ fun ResultScreen(correct: Int, wrong: Int, onBack: () -> Unit) {
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-
                 ScoreCard(
                     label = "Benar",
                     value = correct,
@@ -504,16 +448,4 @@ fun ScoreCard(label: String, value: Int, color: Color, modifier: Modifier) {
             Text(text = value.toString(), style = MaterialTheme.typography.displaySmall, fontWeight = FontWeight.Bold, color = color)
         }
     }
-}
-
-
-@Preview(showBackground = true, showSystemUi = true)
-@Composable
-fun ResultScreenPreview() {
-
-    ResultScreen(
-        correct = 4,
-        wrong = 1,
-        onBack = {}
-    )
 }

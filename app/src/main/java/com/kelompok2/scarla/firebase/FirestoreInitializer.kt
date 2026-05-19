@@ -354,7 +354,7 @@ object FirestoreInitializer {
      *  - cek & unlock achievement terkait
      *  - post ke communityFeed
      */
-    suspend fun recordLessonCompleted(lessonTitle: String) = withContext(Dispatchers.IO) {
+    suspend fun recordLessonCompleted(materialId: String, lessonTitle: String) = withContext(Dispatchers.IO) {
         val uid = auth.currentUser?.uid ?: return@withContext
         try {
             val userRef = db.collection("users").document(uid)
@@ -369,10 +369,9 @@ object FirestoreInitializer {
                 SetOptions.merge()
             ).await()
 
-            // 2. Tulis ke sub-koleksi materials/{title} agar ProfilScreen
+            // 2. Tulis ke sub-koleksi materials/{materialId} agar ProfilScreen
             //    bisa menghitung streak dari completedAt tiap materi
-            val safeTitle = lessonTitle.replace("/", "-").take(50)
-            userRef.collection("materials").document(safeTitle).set(
+            userRef.collection("materials").document(materialId).set(
                 mapOf(
                     "subject" to lessonTitle,
                     "completedAt" to FieldValue.serverTimestamp()
@@ -532,21 +531,23 @@ object FirestoreInitializer {
             )
 
             // 2. Tambah ke friends masing-masing
+            val toAvatar = toSnap.getString("avatarUrl") ?: toSnap.getString("avatar") ?: ""
             batch.set(
                 db.collection("users").document(fromUid).collection("friends").document(toUid),
                 mapOf(
                     "uid" to toUid,
                     "name" to (toSnap.getString("name") ?: ""),
-                    "avatarUrl" to (toSnap.getString("avatarUrl") ?: ""),
+                    "avatarUrl" to toAvatar,
                     "addedAt" to FieldValue.serverTimestamp()
                 )
             )
+            val fromAvatar = fromSnap.getString("avatarUrl") ?: fromSnap.getString("avatar") ?: ""
             batch.set(
                 db.collection("users").document(toUid).collection("friends").document(fromUid),
                 mapOf(
                     "uid" to fromUid,
                     "name" to (fromSnap.getString("name") ?: ""),
-                    "avatarUrl" to (fromSnap.getString("avatarUrl") ?: ""),
+                    "avatarUrl" to fromAvatar,
                     "addedAt" to FieldValue.serverTimestamp()
                 )
             )
@@ -574,7 +575,6 @@ object FirestoreInitializer {
 
             // 5. Post community feed
             val toName = toSnap.getString("name") ?: "Pengguna"
-            val toAvatar = toSnap.getString("avatarUrl") ?: ""
             postToFeed(
                 uid = toUid, userName = toName, avatarUrl = toAvatar,
                 type = "friend",

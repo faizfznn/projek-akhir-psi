@@ -260,6 +260,29 @@ class CariViewModel(
         _uiState.update { it.copy(showFriendAcceptedPopup = false) }
     }
 
+    fun handleSearchCardClick(friend: FriendProfile, onNavigateToChat: (String, String) -> Unit) {
+        val currentUid = auth.currentUser?.uid ?: return
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                val snap = db.collection("users").document(currentUid).collection("friends").document(friend.id).get().await()
+                if (snap.exists()) {
+                    kotlinx.coroutines.withContext(Dispatchers.Main) {
+                        onNavigateToChat(friend.id, friend.name)
+                    }
+                } else {
+                    kotlinx.coroutines.withContext(Dispatchers.Main) {
+                        openFriendRequestPopup(friend)
+                    }
+                }
+            } catch(e: Exception) {
+                Log.e(TAG, "Failed to check friend status", e)
+                kotlinx.coroutines.withContext(Dispatchers.Main) {
+                    openFriendRequestPopup(friend)
+                }
+            }
+        }
+    }
+
     fun openFriendRequestPopup(friend: FriendProfile) {
         _uiState.update {
             it.copy(

@@ -72,29 +72,7 @@ fun AppNavigation() {
     val navController = rememberNavController()
     val scope = rememberCoroutineScope()
 
-    var htmlQuizFinished by rememberSaveable {
-        mutableStateOf(false)
-    }
-
-    val htmlDownloadedList = rememberSaveable(
-        saver = listSaver(
-            save = { it.toList() },
-            restore = { it.toMutableStateList() }
-        )
-    ) {
-        mutableStateListOf(false, false, false)
-    }
-
-    val htmlFinishedList = rememberSaveable(
-        saver = listSaver(
-            save = { it.toList() },
-            restore = { it.toMutableStateList() }
-        )
-    ) {
-        mutableStateListOf(false, false, false)
-    }
-
-
+    // Removed HTML-specific local states
     NavHost(
         navController = navController,
         startDestination = Screen.Splash.route,
@@ -312,23 +290,30 @@ fun AppNavigation() {
             InformatikaScreen(navController = navController)
         }
 
-        composable("html_screen") {
-            HtmlScreen(
+        composable(
+            route = "material_screen/{materialId}",
+            arguments = listOf(androidx.navigation.navArgument("materialId") { type = androidx.navigation.NavType.StringType })
+        ) { backStackEntry ->
+            val materialId = backStackEntry.arguments?.getString("materialId") ?: "html"
+            MaterialScreen(
                 navController = navController,
-                isQuizFinished = htmlQuizFinished,
-                downloadedList = htmlDownloadedList,
-                finishedList = htmlFinishedList
+                materialId = materialId
             )
         }
 
-        composable("quiz_html") {
-
-            QuizHtmlScreen(
+        composable(
+            route = "quiz_screen/{materialId}/{quizId}",
+            arguments = listOf(
+                androidx.navigation.navArgument("materialId") { type = androidx.navigation.NavType.StringType },
+                androidx.navigation.navArgument("quizId") { type = androidx.navigation.NavType.StringType }
+            )
+        ) { backStackEntry ->
+            val materialId = backStackEntry.arguments?.getString("materialId") ?: "html"
+            val quizId = backStackEntry.arguments?.getString("quizId") ?: "html_quiz"
+            QuizScreen(
                 navController = navController,
-
-                onQuizFinished = {
-                    htmlQuizFinished = true
-                }
+                materialId = materialId,
+                quizId = quizId
             )
         }
 

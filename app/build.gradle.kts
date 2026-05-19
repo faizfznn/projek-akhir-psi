@@ -87,4 +87,8 @@ dependencies {
     implementation("com.google.android.gms:play-services-auth:21.1.0")
 
     implementation("androidx.compose.runtime:runtime-livedata:1.6.7")
+    
+    // Retrofit & Gson
+    implementation("com.squareup.retrofit2:retrofit:2.11.0")
+    implementation("com.squareup.retrofit2:converter-gson:2.11.0")
 }

@@ -41,32 +41,37 @@ fun InformatikaScreen(navController: NavController) {
             "HTML",
             "HTML dasar",
             R.drawable.ic_html,
-            "html_screen"
+            "material_screen/html"
         ),
         InformatikaItem(
             "CSS",
             "CSS dasar",
-            R.drawable.ic_css
+            R.drawable.ic_css,
+            "material_screen/css"
         ),
         InformatikaItem(
             "Javascript",
             "Javascript dasar",
-            R.drawable.ic_javascript
+            R.drawable.ic_javascript,
+            "material_screen/javascript"
         ),
         InformatikaItem(
             "Java",
             "Java dasar",
-            R.drawable.ic_java
+            R.drawable.ic_java,
+            "material_screen/java"
         ),
         InformatikaItem(
             "Python",
             "Python dasar",
-            R.drawable.ic_python
+            R.drawable.ic_python,
+            "material_screen/python"
         ),
         InformatikaItem(
             "C#",
             "C# dasar",
-            R.drawable.ic_csharp
+            R.drawable.ic_csharp,
+            "material_screen/csharp"
         )
     )
 

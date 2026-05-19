@@ -74,8 +74,48 @@ class ChatViewModel : ViewModel() {
             return@callbackFlow
         }
 
-        // Query semua chat yang melibatkan user ini
-        val listener = db.collection("messages")
+        var currentFriends: List<ChatContact> = emptyList()
+        var currentChats: List<ChatContact> = emptyList()
+
+        fun emitMerged() {
+            val chatMap = currentChats.associateBy { it.uid }
+            val merged = currentFriends.map { friend ->
+                val chat = chatMap[friend.uid]
+                if (chat != null) {
+                    val finalAvatar = friend.avatarUrl.ifBlank { chat.avatarUrl }
+                    val finalName = friend.name.ifBlank { chat.name }
+                    chat.copy(name = finalName, avatarUrl = finalAvatar) 
+                } else {
+                    friend
+                }
+            }.toMutableList()
+
+            // Tambahkan chat yang mungkin bukan teman (jika ada)
+            val friendIds = currentFriends.map { it.uid }.toSet()
+            merged.addAll(currentChats.filter { it.uid !in friendIds })
+
+            trySend(merged.sortedByDescending { it.lastMessageMillis })
+        }
+
+        val friendsListener = db.collection("users").document(myUid).collection("friends")
+            .addSnapshotListener { snap, err ->
+                if (err != null) {
+                    Log.e(TAG, "Friends listener error: ${err.message}")
+                    return@addSnapshotListener
+                }
+                currentFriends = snap?.documents?.mapNotNull { doc ->
+                    ChatContact(
+                        uid = doc.id,
+                        name = doc.getString("name") ?: "",
+                        avatarUrl = doc.getString("avatarUrl") ?: doc.getString("avatar") ?: "",
+                        lastMessage = "",
+                        lastMessageMillis = 0L
+                    )
+                } ?: emptyList()
+                emitMerged()
+            }
+
+        val chatsListener = db.collection("messages")
             .whereArrayContains("participants", myUid)
             .addSnapshotListener { snap, error ->
                 if (error != null) {
@@ -83,7 +123,7 @@ class ChatViewModel : ViewModel() {
                     return@addSnapshotListener
                 }
 
-                val contacts = snap?.documents?.mapNotNull { doc ->
+                currentChats = snap?.documents?.mapNotNull { doc ->
                     @Suppress("UNCHECKED_CAST")
                     val participants = doc.get("participants") as? List<String> ?: return@mapNotNull null
                     val peerUid = participants.firstOrNull { it != myUid } ?: return@mapNotNull null
@@ -100,11 +140,13 @@ class ChatViewModel : ViewModel() {
                         lastMessageMillis = lastTs
                     )
                 } ?: emptyList()
-
-                trySend(contacts.sortedByDescending { it.lastMessageMillis })
+                emitMerged()
             }
 
-        awaitClose { listener.remove() }
+        awaitClose { 
+            friendsListener.remove()
+            chatsListener.remove()
+        }
     }.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5_000),

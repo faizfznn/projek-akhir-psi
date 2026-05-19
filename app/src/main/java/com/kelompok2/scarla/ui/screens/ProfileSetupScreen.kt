@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.grid.GridCells
@@ -120,6 +121,7 @@ fun ProfileSetupScreen(
     var city by remember { mutableStateOf("") }
     var selectedAvatar by remember { mutableStateOf<String?>(null) }
     var genderExpanded by remember { mutableStateOf(false) }
+    var cityExpanded by remember { mutableStateOf(false) }
     var datePickerVisible by remember { mutableStateOf(false) }
     var isLoading by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
@@ -319,13 +321,64 @@ fun ProfileSetupScreen(
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            AuthTextField(
-                value = city,
-                onValueChange = { city = it },
-                label = "Asal kota",
-                placeholder = "Masukkan asal kota",
+            ExposedDropdownMenuBox(
+                expanded = cityExpanded,
+                onExpandedChange = { cityExpanded = !cityExpanded },
                 modifier = Modifier.fillMaxWidth()
-            )
+            ) {
+                OutlinedTextField(
+                    value = city,
+                    onValueChange = {},
+                    readOnly = true,
+                    label = { Text("Asal kota", style = PoppinsTinyRegular, color = Neutral600) },
+                    placeholder = { Text("Pilih asal kota", style = PoppinsSmallRegular, color = Neutral400) },
+                    trailingIcon = {
+                        Icon(
+                            imageVector = Icons.Default.ArrowDropDown,
+                            contentDescription = "Pilih asal kota",
+                            tint = Neutral500
+                        )
+                    },
+                    shape = RoundedCornerShape(12.dp),
+                    singleLine = true,
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = Secondary500,
+                        unfocusedBorderColor = Neutral300,
+                        focusedLabelColor = Secondary500,
+                        unfocusedLabelColor = Neutral500,
+                        cursorColor = Secondary500,
+                        focusedContainerColor = Color.White,
+                        unfocusedContainerColor = Color.White
+                    ),
+                    textStyle = PoppinsSmallRegular,
+                    modifier = Modifier
+                        .menuAnchor()
+                        .fillMaxWidth()
+                )
+
+                DropdownMenu(
+                    expanded = cityExpanded,
+                    onDismissRequest = { cityExpanded = false },
+                    modifier = Modifier.heightIn(max = 280.dp)
+                ) {
+                    val indonesianCities = listOf(
+                        "Jakarta", "Surabaya", "Bandung", "Medan", 
+                        "Semarang", "Makassar", "Palembang", "Denpasar", 
+                        "Yogyakarta", "Malang", "Balikpapan", "Padang", 
+                        "Pekanbaru", "Banjarmasin", "Pontianak", "Batam", 
+                        "Samarinda", "Manado", "Ambon", "Jayapura", "Lainnya"
+                    )
+                    indonesianCities.forEach { option ->
+                        DropdownMenuItem(
+                            text = { Text(option, style = PoppinsSmallRegular) },
+                            onClick = {
+                                city = option
+                                cityExpanded = false
+                            }
+                        )
+                    }
+                }
+            }
 
             Spacer(modifier = Modifier.height(20.dp))
             Text(

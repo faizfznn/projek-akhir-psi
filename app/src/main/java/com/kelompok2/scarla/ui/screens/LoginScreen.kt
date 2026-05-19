@@ -154,58 +154,6 @@ fun LoginScreen(
                 modifier = Modifier.fillMaxWidth()
             )
 
-            AppButton(
-                text = "Masuk User 1",
-                buttonType = ButtonType.PRIMARY,
-                enabled = !isLoading,
-                onClick = {
-                    isLoading = true
-                    email = "tes@tes.com"
-                    password = "121212"
-                    auth.signInWithEmailAndPassword(email, password)
-                        .addOnCompleteListener { task ->
-                            isLoading = false
-                            if (task.isSuccessful) {
-                                val uid = auth.currentUser?.uid
-                                if (uid != null) {
-                                    onLoginSuccess(uid)
-                                } else {
-                                    errorMessage = "Login gagal. UID pengguna tidak ditemukan."
-                                }
-                            } else {
-                                errorMessage = task.exception?.localizedMessage
-                                    ?: "Login gagal. Periksa email dan kata sandi."
-                            }  
-                        }
-                }
-            )
-
-            AppButton(
-                text = "Masuk User 2",
-                buttonType = ButtonType.PRIMARY,
-                enabled = !isLoading,
-                onClick = {
-                    isLoading = true
-                    email = "tis@tis.com"
-                    password = "121212"
-                    auth.signInWithEmailAndPassword(email, password)
-                        .addOnCompleteListener { task ->
-                            isLoading = false
-                            if (task.isSuccessful) {
-                                val uid = auth.currentUser?.uid
-                                if (uid != null) {
-                                    onLoginSuccess(uid)
-                                } else {
-                                    errorMessage = "Login gagal. UID pengguna tidak ditemukan."
-                                }
-                            } else {
-                                errorMessage = task.exception?.localizedMessage
-                                    ?: "Login gagal. Periksa email dan kata sandi."
-                            }  
-                        }
-                }
-            )
-
             Spacer(modifier = Modifier.height(20.dp))
 
             Row(
