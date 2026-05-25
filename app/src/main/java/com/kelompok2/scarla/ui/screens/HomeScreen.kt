@@ -228,7 +228,7 @@ fun HomeScreen(
                     .wrapContentHeight()
                 ) {
                     Text(
-                        text = "Lanjut Belajar",
+                        text = "Rekomendasi Untuk Anda",
                         style = TextStyle(
                             fontSize = 20.sp,
                             fontFamily = FontFamily(Font(R.font.poppins_bold)),
@@ -285,7 +285,7 @@ fun HomeScreen(
                                 }
 
                                 AppButton(
-                                    text = "Continue",
+                                    text = "Jelajahi",
                                     buttonType = ButtonType.PRIMARY,
                                     onClick = {
                                         onNavigateToHtml()
