@@ -19,43 +19,43 @@ import kotlinx.coroutines.launch
 // ──────────────────────────────────────────────────────────────────────────────
 
 data class CommunityData(
-    val id: String = "",
-    val name: String = "",
-    val iconRes: String = "",
-    val description: String = "",
-    val memberCount: Int = 0,
-    val isJoined: Boolean = false
+        val id: String = "",
+        val name: String = "",
+        val iconRes: String = "",
+        val description: String = "",
+        val memberCount: Int = 0,
+        val isJoined: Boolean = false
 )
 
 data class CommunityChannel(
-    val id: String = "",
-    val name: String = "",
-    val type: String = "discussion",
-    val lastMessage: String = "",
-    val lastMessageAt: Long = 0L
+        val id: String = "",
+        val name: String = "",
+        val type: String = "discussion",
+        val lastMessage: String = "",
+        val lastMessageAt: Long = 0L
 )
 
 data class CommunityMessage(
-    val id: String = "",
-    val senderUid: String = "",
-    val senderName: String = "",
-    val text: String = "",
-    val timestampMillis: Long = 0L
+        val id: String = "",
+        val senderUid: String = "",
+        val senderName: String = "",
+        val text: String = "",
+        val timestampMillis: Long = 0L
 )
 
 data class KomunitasUiState(
-    val joinedCommunities: List<CommunityData> = emptyList(),
-    val discoverCommunities: List<CommunityData> = emptyList(),
-    val allCommunities: List<CommunityData> = emptyList(),
-    val channels: List<CommunityChannel> = emptyList(),
-    val messages: List<CommunityMessage> = emptyList(),
-    val isLoading: Boolean = true,
-    val isJoining: Set<String> = emptySet(),  // communityIds currently being joined
-    val currentMessage: String = "",
-    val activeCommunityId: String? = null,
-    val activeCommunityName: String = "",
-    val activeChannelId: String? = null,
-    val activeChannelName: String = ""
+        val joinedCommunities: List<CommunityData> = emptyList(),
+        val discoverCommunities: List<CommunityData> = emptyList(),
+        val allCommunities: List<CommunityData> = emptyList(),
+        val channels: List<CommunityChannel> = emptyList(),
+        val messages: List<CommunityMessage> = emptyList(),
+        val isLoading: Boolean = true,
+        val isJoining: Set<String> = emptySet(), // communityIds currently being joined
+        val currentMessage: String = "",
+        val activeCommunityId: String? = null,
+        val activeCommunityName: String = "",
+        val activeChannelId: String? = null,
+        val activeChannelName: String = ""
 )
 
 // ──────────────────────────────────────────────────────────────────────────────
@@ -105,35 +105,40 @@ class KomunitasViewModel : ViewModel() {
 
         Log.d(TAG, "👂 Starting communities listener for uid=$myUid")
 
-        communitiesListener = db.collection("communities")
-            .addSnapshotListener { snap, error ->
-                if (error != null) {
-                    Log.e(TAG, "❌ Communities listener error: ${error.message}")
-                    _uiState.update { it.copy(isLoading = false) }
-                    return@addSnapshotListener
-                }
+        communitiesListener =
+                db.collection("communities").addSnapshotListener { snap, error ->
+                    if (error != null) {
+                        Log.e(TAG, "❌ Communities listener error: ${error.message}")
+                        _uiState.update { it.copy(isLoading = false) }
+                        return@addSnapshotListener
+                    }
 
-                val allCommunities = snap?.documents?.map { doc ->
-                    CommunityData(
-                        id = doc.id,
-                        name = doc.getString("name") ?: "",
-                        iconRes = doc.getString("iconRes") ?: "",
-                        description = doc.getString("description") ?: "",
-                        memberCount = (doc.getLong("memberCount") ?: 0).toInt(),
-                        isJoined = false // Will be resolved per-community below
+                    val allCommunities =
+                            snap?.documents?.map { doc ->
+                                CommunityData(
+                                        id = doc.id,
+                                        name = doc.getString("name") ?: "",
+                                        iconRes = doc.getString("iconRes") ?: "",
+                                        description = doc.getString("description") ?: "",
+                                        memberCount = (doc.getLong("memberCount") ?: 0).toInt(),
+                                        isJoined = false // Will be resolved per-community below
+                                )
+                            }
+                                    ?: emptyList()
+
+                    Log.d(
+                            TAG,
+                            "📦 Communities loaded: ${allCommunities.size} items → ${allCommunities.map { it.name }}"
                     )
-                } ?: emptyList()
 
-                Log.d(TAG, "📦 Communities loaded: ${allCommunities.size} items → ${allCommunities.map { it.name }}")
-
-                // For each community, check membership
-                checkMemberships(myUid, allCommunities)
-            }
+                    // For each community, check membership
+                    checkMemberships(myUid, allCommunities)
+                }
     }
 
     /**
-     * Check membership status for each community and update UI state.
-     * Uses individual membership checks (efficient for small community count).
+     * Check membership status for each community and update UI state. Uses individual membership
+     * checks (efficient for small community count).
      */
     private fun checkMemberships(uid: String, communities: List<CommunityData>) {
         // Clear old member listeners
@@ -147,50 +152,55 @@ class KomunitasViewModel : ViewModel() {
         if (communities.isEmpty()) {
             _uiState.update {
                 it.copy(
-                    joinedCommunities = emptyList(),
-                    discoverCommunities = emptyList(),
-                    allCommunities = emptyList(),
-                    isLoading = false
+                        joinedCommunities = emptyList(),
+                        discoverCommunities = emptyList(),
+                        allCommunities = emptyList(),
+                        isLoading = false
                 )
             }
             return
         }
 
         communities.forEach { community ->
-            val listener = db.collection("communities")
-                .document(community.id)
-                .collection("members")
-                .document(uid)
-                .addSnapshotListener { memberSnap, memberError ->
-                    if (memberError != null) {
-                        Log.e(TAG, "Member check error for ${community.id}: ${memberError.message}")
-                        membershipMap[community.id] = false
-                    } else {
-                        membershipMap[community.id] = memberSnap?.exists() == true
-                    }
+            val listener =
+                    db.collection("communities")
+                            .document(community.id)
+                            .collection("members")
+                            .document(uid)
+                            .addSnapshotListener { memberSnap, memberError ->
+                                if (memberError != null) {
+                                    Log.e(
+                                            TAG,
+                                            "Member check error for ${community.id}: ${memberError.message}"
+                                    )
+                                    membershipMap[community.id] = false
+                                } else {
+                                    membershipMap[community.id] = memberSnap?.exists() == true
+                                }
 
-                    checksCompleted++
+                                checksCompleted++
 
-                    // Update state when we have info for all communities
-                    // (or on each update for reactivity)
-                    if (membershipMap.size == communities.size) {
-                        val updatedCommunities = communities.map { c ->
-                            c.copy(isJoined = membershipMap[c.id] == true)
-                        }
+                                // Update state when we have info for all communities
+                                // (or on each update for reactivity)
+                                if (membershipMap.size == communities.size) {
+                                    val updatedCommunities =
+                                            communities.map { c ->
+                                                c.copy(isJoined = membershipMap[c.id] == true)
+                                            }
 
-                        val joined = updatedCommunities.filter { it.isJoined }
-                        val discover = updatedCommunities.filter { !it.isJoined }
+                                    val joined = updatedCommunities.filter { it.isJoined }
+                                    val discover = updatedCommunities.filter { !it.isJoined }
 
-                        _uiState.update { state ->
-                            state.copy(
-                                joinedCommunities = joined,
-                                discoverCommunities = discover,
-                                allCommunities = updatedCommunities,
-                                isLoading = false
-                            )
-                        }
-                    }
-                }
+                                    _uiState.update { state ->
+                                        state.copy(
+                                                joinedCommunities = joined,
+                                                discoverCommunities = discover,
+                                                allCommunities = updatedCommunities,
+                                                isLoading = false
+                                        )
+                                    }
+                                }
+                            }
             memberListeners.add(listener)
         }
     }
@@ -235,77 +245,112 @@ class KomunitasViewModel : ViewModel() {
 
         _uiState.update {
             it.copy(
-                activeCommunityId = communityId,
-                activeCommunityName = communityName,
-                channels = emptyList()
+                    activeCommunityId = communityId,
+                    activeCommunityName = communityName,
+                    channels = emptyList()
             )
         }
 
-        channelsListener = db.collection("communities")
-            .document(communityId)
-            .collection("channels")
-            .addSnapshotListener { snap, error ->
-                if (error != null) {
-                    Log.e(TAG, "Channels listener error: ${error.message}")
-                    return@addSnapshotListener
-                }
+        channelsListener =
+                db.collection("communities")
+                        .document(communityId)
+                        .collection("channels")
+                        .addSnapshotListener { snap, error ->
+                            if (error != null) {
+                                Log.e(TAG, "Channels listener error: ${error.message}")
+                                return@addSnapshotListener
+                            }
 
-                val channels = snap?.documents?.map { doc ->
-                    CommunityChannel(
-                        id = doc.id,
-                        name = doc.getString("name") ?: "",
-                        type = doc.getString("type") ?: "discussion",
-                        lastMessage = doc.getString("lastMessage") ?: "",
-                        lastMessageAt = doc.getTimestamp("lastMessageAt")?.toDate()?.time ?: 0L
-                    )
-                } ?: emptyList()
+                            val channels =
+                                    snap?.documents?.map { doc ->
+                                        CommunityChannel(
+                                                id = doc.id,
+                                                name = doc.getString("name") ?: "",
+                                                type = doc.getString("type") ?: "discussion",
+                                                lastMessage = doc.getString("lastMessage") ?: "",
+                                                lastMessageAt =
+                                                        doc.getTimestamp("lastMessageAt")
+                                                                ?.toDate()
+                                                                ?.time
+                                                                ?: 0L
+                                        )
+                                    }
+                                            ?: emptyList()
 
-                _uiState.update { it.copy(channels = channels) }
+                            _uiState.update { it.copy(channels = channels) }
+                        }
+    }
+
+    // Toggle expand/collapse komunitas di halaman Komunitas
+    fun toggleCommunityChannels(communityId: String, communityName: String) {
+        val current = _uiState.value.activeCommunityId
+        if (current == communityId) {
+            // collapse
+            channelsListener?.remove()
+            channelsListener = null
+            _uiState.update {
+                it.copy(activeCommunityId = null, activeCommunityName = "", channels = emptyList())
             }
+        } else {
+            // expand komunitas yang dipilih
+            openCommunityChannels(communityId, communityName)
+        }
     }
 
     // ─────────────────────────────────────────────────────────────────────
     // MESSAGES: Real-time channel messages
     // ─────────────────────────────────────────────────────────────────────
 
-    fun openChannel(communityId: String, channelId: String, communityName: String, channelName: String) {
+    fun openChannel(
+            communityId: String,
+            channelId: String,
+            communityName: String,
+            channelName: String
+    ) {
         messagesListener?.remove()
 
         _uiState.update {
             it.copy(
-                activeCommunityId = communityId,
-                activeCommunityName = communityName,
-                activeChannelId = channelId,
-                activeChannelName = channelName,
-                messages = emptyList(),
-                currentMessage = ""
+                    activeCommunityId = communityId,
+                    activeCommunityName = communityName,
+                    activeChannelId = channelId,
+                    activeChannelName = channelName,
+                    messages = emptyList(),
+                    currentMessage = ""
             )
         }
 
-        messagesListener = db.collection("communities")
-            .document(communityId)
-            .collection("channels")
-            .document(channelId)
-            .collection("messages")
-            .orderBy("timestamp", Query.Direction.ASCENDING)
-            .addSnapshotListener { snap, error ->
-                if (error != null) {
-                    Log.e(TAG, "Messages listener error: ${error.message}")
-                    return@addSnapshotListener
-                }
+        messagesListener =
+                db.collection("communities")
+                        .document(communityId)
+                        .collection("channels")
+                        .document(channelId)
+                        .collection("messages")
+                        .orderBy("timestamp", Query.Direction.ASCENDING)
+                        .addSnapshotListener { snap, error ->
+                            if (error != null) {
+                                Log.e(TAG, "Messages listener error: ${error.message}")
+                                return@addSnapshotListener
+                            }
 
-                val messages = snap?.documents?.map { doc ->
-                    CommunityMessage(
-                        id = doc.id,
-                        senderUid = doc.getString("senderUid") ?: "",
-                        senderName = doc.getString("senderName") ?: "",
-                        text = doc.getString("text") ?: "",
-                        timestampMillis = doc.getTimestamp("timestamp")?.toDate()?.time ?: 0L
-                    )
-                } ?: emptyList()
+                            val messages =
+                                    snap?.documents?.map { doc ->
+                                        CommunityMessage(
+                                                id = doc.id,
+                                                senderUid = doc.getString("senderUid") ?: "",
+                                                senderName = doc.getString("senderName") ?: "",
+                                                text = doc.getString("text") ?: "",
+                                                timestampMillis =
+                                                        doc.getTimestamp("timestamp")
+                                                                ?.toDate()
+                                                                ?.time
+                                                                ?: 0L
+                                        )
+                                    }
+                                            ?: emptyList()
 
-                _uiState.update { it.copy(messages = messages) }
-            }
+                            _uiState.update { it.copy(messages = messages) }
+                        }
     }
 
     fun closeChannel() {
@@ -313,10 +358,10 @@ class KomunitasViewModel : ViewModel() {
         messagesListener = null
         _uiState.update {
             it.copy(
-                activeChannelId = null,
-                activeChannelName = "",
-                messages = emptyList(),
-                currentMessage = ""
+                    activeChannelId = null,
+                    activeChannelName = "",
+                    messages = emptyList(),
+                    currentMessage = ""
             )
         }
     }

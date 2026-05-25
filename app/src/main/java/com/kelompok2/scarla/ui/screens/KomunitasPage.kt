@@ -15,7 +15,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -25,7 +24,6 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -61,50 +59,48 @@ import java.util.Locale
 
 @Composable
 fun KomunitasTabContent(
-    navController: NavController? = null,
-    komunitasViewModel: KomunitasViewModel = viewModel()
+        navController: NavController? = null,
+        komunitasViewModel: KomunitasViewModel = viewModel()
 ) {
     val scrollState = rememberScrollState()
     val uiState by komunitasViewModel.uiState.collectAsStateWithLifecycle()
 
     if (uiState.isLoading) {
-        Box(
-            modifier = Modifier.fillMaxSize(),
-            contentAlignment = Alignment.Center
-        ) {
+        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
             CircularProgressIndicator(color = Color(0xFFFFCC00))
         }
         return
     }
 
     Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .verticalScroll(scrollState)
-            .padding(horizontal = 20.dp, vertical = 8.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
+            modifier =
+                    Modifier.fillMaxSize()
+                            .verticalScroll(scrollState)
+                            .padding(horizontal = 20.dp, vertical = 8.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         // ── Section: Komunitas yang kamu ikuti ─────────────────────────
         if (uiState.joinedCommunities.isNotEmpty()) {
             Text(
-                text = "Komunitas yang kamu ikuti",
-                style = TextStyle(
-                    fontSize = 18.sp,
-                    fontFamily = FontFamily(Font(R.font.poppins_bold)),
-                    fontWeight = FontWeight(700),
-                    color = Neutral900
-                )
+                    text = "Komunitas yang kamu ikuti",
+                    style =
+                            TextStyle(
+                                    fontSize = 18.sp,
+                                    fontFamily = FontFamily(Font(R.font.poppins_bold)),
+                                    fontWeight = FontWeight(700),
+                                    color = Neutral900
+                            )
             )
 
             uiState.joinedCommunities.forEach { komunitas ->
                 KomunitasDiikutiCard(
-                    komunitas = komunitas,
-                    channels = uiState.channels,
-                    activeCommunityId = uiState.activeCommunityId,
-                    navController = navController,
-                    onCardClick = {
-                        komunitasViewModel.openCommunityChannels(komunitas.id, komunitas.name)
-                    }
+                        komunitas = komunitas,
+                        channels = uiState.channels,
+                        activeCommunityId = uiState.activeCommunityId,
+                        navController = navController,
+                        onToggle = {
+                            komunitasViewModel.toggleCommunityChannels(komunitas.id, komunitas.name)
+                        }
                 )
             }
 
@@ -114,48 +110,47 @@ fun KomunitasTabContent(
         // ── Section: Temukan komunitas ─────────────────────────────────
         if (uiState.discoverCommunities.isNotEmpty()) {
             Text(
-                text = "Temukan komunitas",
-                style = TextStyle(
-                    fontSize = 18.sp,
-                    fontFamily = FontFamily(Font(R.font.poppins_bold)),
-                    fontWeight = FontWeight(700),
-                    color = Neutral900
-                )
+                    text = "Temukan komunitas",
+                    style =
+                            TextStyle(
+                                    fontSize = 18.sp,
+                                    fontFamily = FontFamily(Font(R.font.poppins_bold)),
+                                    fontWeight = FontWeight(700),
+                                    color = Neutral900
+                            )
             )
 
             // Show max 2 discover communities in main tab
             uiState.discoverCommunities.take(2).forEach { komunitas ->
                 KomunitasDiscoverCard(
-                    komunitas = komunitas,
-                    isJoining = komunitas.id in uiState.isJoining,
-                    onJoin = { komunitasViewModel.joinCommunity(komunitas.id) }
+                        komunitas = komunitas,
+                        isJoining = komunitas.id in uiState.isJoining,
+                        onJoin = { komunitasViewModel.joinCommunity(komunitas.id) }
                 )
             }
         }
 
         // ── Tombol Jelajahi Lainnya ────────────────────────────────────
-        Box(
-            modifier = Modifier.fillMaxWidth(),
-            contentAlignment = Alignment.Center
-        ) {
+        Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
             Box(
-                modifier = Modifier
-                    .clip(RoundedCornerShape(28.dp))
-                    .background(Color(0xFFFFDD00))
-                    .clickable {
-                        navController?.navigate(Screen.JelajahiKomunitas.route)
-                    }
-                    .padding(horizontal = 28.dp, vertical = 12.dp),
-                contentAlignment = Alignment.Center
+                    modifier =
+                            Modifier.clip(RoundedCornerShape(28.dp))
+                                    .background(Color(0xFFFFDD00))
+                                    .clickable {
+                                        navController?.navigate(Screen.JelajahiKomunitas.route)
+                                    }
+                                    .padding(horizontal = 28.dp, vertical = 12.dp),
+                    contentAlignment = Alignment.Center
             ) {
                 Text(
-                    text = "Jelajahi Lainnya",
-                    style = TextStyle(
-                        fontSize = 14.sp,
-                        fontFamily = FontFamily(Font(R.font.poppins_bold)),
-                        fontWeight = FontWeight(700),
-                        color = Neutral900
-                    )
+                        text = "Jelajahi Lainnya",
+                        style =
+                                TextStyle(
+                                        fontSize = 14.sp,
+                                        fontFamily = FontFamily(Font(R.font.poppins_bold)),
+                                        fontWeight = FontWeight(700),
+                                        color = Neutral900
+                                )
                 )
             }
         }
@@ -170,173 +165,213 @@ fun KomunitasTabContent(
 
 @Composable
 fun KomunitasDiikutiCard(
-    komunitas: CommunityData,
-    channels: List<CommunityChannel>,
-    activeCommunityId: String?,
-    navController: NavController? = null,
-    onCardClick: () -> Unit
+        komunitas: CommunityData,
+        channels: List<CommunityChannel>,
+        activeCommunityId: String?,
+        navController: NavController? = null,
+        onToggle: () -> Unit
 ) {
     val context = LocalContext.current
-    val iconResId = remember(komunitas.iconRes) {
-        if (komunitas.iconRes.isNotBlank())
-            context.resources.getIdentifier(komunitas.iconRes, "drawable", context.packageName)
-        else 0
-    }
+    val iconResId =
+            remember(komunitas.iconRes) {
+                if (komunitas.iconRes.isNotBlank())
+                        context.resources.getIdentifier(
+                                komunitas.iconRes,
+                                "drawable",
+                                context.packageName
+                        )
+                else 0
+            }
 
-    // Load channels when this card is first shown
-    LaunchedEffect(komunitas.id) {
-        if (activeCommunityId != komunitas.id) {
-            onCardClick()
-        }
-    }
-
-    // Only show channels for this community
-    val communityChannels = if (activeCommunityId == komunitas.id) channels else emptyList()
+    val isExpanded = activeCommunityId == komunitas.id
+    val communityChannels = if (isExpanded) channels else emptyList()
 
     Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(20.dp))
-            .background(Color(0xFFFFCC00))
-            .padding(16.dp)
+            modifier =
+                    Modifier.fillMaxWidth()
+                            .clip(RoundedCornerShape(20.dp))
+                            .background(Color(0xFFFFCC00))
+                            // Tap card untuk toggle buka/tutup
+                            .clickable { onToggle() }
+                            .padding(16.dp)
     ) {
-        Column(verticalArrangement = Arrangement.spacedBy(0.dp)) {
-            // ── Header komunitas ──────────────────────────────────────────
+        Column {
+            // Header komunitas
             Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 Box(
-                    modifier = Modifier
-                        .size(52.dp)
-                        .clip(RoundedCornerShape(12.dp))
-                        .background(Color.White),
-                    contentAlignment = Alignment.Center
+                        modifier =
+                                Modifier.size(52.dp)
+                                        .clip(RoundedCornerShape(12.dp))
+                                        .background(Color.White),
+                        contentAlignment = Alignment.Center
                 ) {
                     if (iconResId != 0) {
                         Image(
-                            painter = painterResource(id = iconResId),
-                            contentDescription = komunitas.name,
-                            modifier = Modifier.size(36.dp),
-                            contentScale = ContentScale.Fit
+                                painter = painterResource(id = iconResId),
+                                contentDescription = komunitas.name,
+                                modifier = Modifier.size(36.dp),
+                                contentScale = ContentScale.Fit
                         )
                     } else {
                         Text(
-                            text = komunitas.name.firstOrNull()?.uppercase() ?: "?",
-                            style = TextStyle(
-                                fontSize = 18.sp,
-                                fontFamily = FontFamily(Font(R.font.poppins_bold)),
-                                fontWeight = FontWeight(700),
-                                color = Neutral900
-                            )
+                                text = komunitas.name.firstOrNull()?.uppercase() ?: "?",
+                                style =
+                                        TextStyle(
+                                                fontSize = 18.sp,
+                                                fontFamily = FontFamily(Font(R.font.poppins_bold)),
+                                                fontWeight = FontWeight(700),
+                                                color = Neutral900
+                                        )
                         )
                     }
                 }
+
                 Text(
-                    text = komunitas.name,
-                    style = TextStyle(
-                        fontSize = 16.sp,
-                        fontFamily = FontFamily(Font(R.font.poppins_bold)),
-                        fontWeight = FontWeight(700),
-                        color = Color.White
-                    )
+                        text = komunitas.name,
+                        style =
+                                TextStyle(
+                                        fontSize = 16.sp,
+                                        fontFamily = FontFamily(Font(R.font.poppins_bold)),
+                                        fontWeight = FontWeight(700),
+                                        color = Color.White
+                                )
                 )
             }
 
-            Spacer(modifier = Modifier.height(12.dp))
+            if (isExpanded) {
+                Spacer(modifier = Modifier.height(12.dp))
 
-            // Divider putih
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(1.dp)
-                    .background(Color.White.copy(alpha = 0.6f))
-            )
+                Box(
+                        modifier =
+                                Modifier.fillMaxWidth()
+                                        .height(1.dp)
+                                        .background(Color.White.copy(alpha = 0.6f))
+                )
 
-            Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(8.dp))
 
-            // ── Channel list ──────────────────────────────────────────────
-            communityChannels.forEach { channel ->
-                val timeStr = remember(channel.lastMessageAt) {
-                    if (channel.lastMessageAt > 0L)
-                        SimpleDateFormat("HH:mm", Locale("id")).format(Date(channel.lastMessageAt))
-                    else ""
-                }
+                communityChannels.forEach { channel ->
+                    // Introduction = announcement: TIDAK boleh masuk chat
+                    val isIntroduction =
+                            channel.id == "introduction" || channel.type == "announcement"
 
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clip(RoundedCornerShape(10.dp))
-                        .clickable {
-                            navController?.navigate(
-                                Screen.KomunitasRoom.createRoute(
-                                    communityId = komunitas.id,
-                                    channelId = channel.id,
-                                    communityName = komunitas.name,
-                                    channelName = channel.name
-                                )
-                            )
-                        }
-                        .padding(vertical = 6.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(10.dp)
-                ) {
-                    // Icon channel
-                    Box(
-                        modifier = Modifier
-                            .size(36.dp)
-                            .clip(RoundedCornerShape(8.dp))
-                            .background(Color.White.copy(alpha = 0.25f)),
-                        contentAlignment = Alignment.Center
+                    val timeStr =
+                            remember(channel.lastMessageAt) {
+                                if (channel.lastMessageAt > 0L)
+                                        SimpleDateFormat("HH:mm", Locale("id"))
+                                                .format(Date(channel.lastMessageAt))
+                                else ""
+                            }
+
+                    Row(
+                            modifier =
+                                    Modifier.fillMaxWidth()
+                                            .clip(RoundedCornerShape(10.dp))
+                                            .then(
+                                                    if (!isIntroduction) {
+                                                        Modifier.clickable {
+                                                            navController?.navigate(
+                                                                    Screen.KomunitasRoom
+                                                                            .createRoute(
+                                                                                    communityId =
+                                                                                            komunitas
+                                                                                                    .id,
+                                                                                    channelId =
+                                                                                            channel.id,
+                                                                                    communityName =
+                                                                                            komunitas
+                                                                                                    .name,
+                                                                                    channelName =
+                                                                                            channel.name
+                                                                            )
+                                                            )
+                                                        }
+                                                    } else Modifier
+                                            )
+                                            .padding(vertical = 6.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(10.dp)
                     ) {
-                        Icon(
-                            imageVector = if (channel.type == "announcement")
-                                Icons.Default.Campaign
-                            else Icons.Default.Forum,
-                            contentDescription = channel.name,
-                            tint = Color.White,
-                            modifier = Modifier.size(18.dp)
-                        )
-                    }
-
-                    // Nama & preview pesan
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text(
-                            text = channel.name,
-                            style = TextStyle(
-                                fontSize = 13.sp,
-                                fontFamily = FontFamily(Font(R.font.poppins_bold)),
-                                fontWeight = FontWeight(700),
-                                color = Color.White
-                            )
-                        )
-                        if (channel.lastMessage.isNotBlank()) {
-                            Text(
-                                text = channel.lastMessage,
-                                style = TextStyle(
-                                    fontSize = 11.sp,
-                                    fontFamily = FontFamily(Font(R.font.poppins_regular)),
-                                    color = Color.White.copy(alpha = 0.85f)
-                                ),
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis
+                        Box(
+                                modifier =
+                                        Modifier.size(36.dp)
+                                                .clip(RoundedCornerShape(8.dp))
+                                                .background(Color.White.copy(alpha = 0.25f)),
+                                contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                    imageVector =
+                                            if (isIntroduction) Icons.Default.Campaign
+                                            else Icons.Default.Forum,
+                                    contentDescription = channel.name,
+                                    tint = Color.White,
+                                    modifier = Modifier.size(18.dp)
                             )
                         }
-                    }
 
-                    // Waktu
-                    if (timeStr.isNotBlank()) {
-                        Column(
-                            horizontalAlignment = Alignment.End,
-                            verticalArrangement = Arrangement.spacedBy(4.dp)
-                        ) {
+                        Column(modifier = Modifier.weight(1f)) {
                             Text(
-                                text = timeStr,
-                                style = TextStyle(
-                                    fontSize = 11.sp,
-                                    fontFamily = FontFamily(Font(R.font.poppins_regular)),
-                                    color = Color.White
+                                    text = channel.name,
+                                    style =
+                                            TextStyle(
+                                                    fontSize = 13.sp,
+                                                    fontFamily =
+                                                            FontFamily(Font(R.font.poppins_bold)),
+                                                    fontWeight = FontWeight(700),
+                                                    color = Color.White
+                                            )
+                            )
+
+                            if (isIntroduction) {
+                                // Keterangan/peraturan (bukan chat preview)
+                                Text(
+                                        text = introductionTextForCommunity(komunitas.id),
+                                        style =
+                                                TextStyle(
+                                                        fontSize = 11.sp,
+                                                        fontFamily =
+                                                                FontFamily(
+                                                                        Font(R.font.poppins_regular)
+                                                                ),
+                                                        color = Color.White.copy(alpha = 0.9f)
+                                                ),
+                                        maxLines = 4,
+                                        overflow = TextOverflow.Ellipsis
                                 )
+                            } else if (channel.lastMessage.isNotBlank()) {
+                                Text(
+                                        text = channel.lastMessage,
+                                        style =
+                                                TextStyle(
+                                                        fontSize = 11.sp,
+                                                        fontFamily =
+                                                                FontFamily(
+                                                                        Font(R.font.poppins_regular)
+                                                                ),
+                                                        color = Color.White.copy(alpha = 0.85f)
+                                                ),
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis
+                                )
+                            }
+                        }
+
+                        // Waktu hanya untuk channel diskusi (chat)
+                        if (!isIntroduction && timeStr.isNotBlank()) {
+                            Text(
+                                    text = timeStr,
+                                    style =
+                                            TextStyle(
+                                                    fontSize = 11.sp,
+                                                    fontFamily =
+                                                            FontFamily(
+                                                                    Font(R.font.poppins_regular)
+                                                            ),
+                                                    color = Color.White
+                                            )
                             )
                         }
                     }
@@ -346,130 +381,191 @@ fun KomunitasDiikutiCard(
     }
 }
 
+private fun introductionTextForCommunity(communityId: String): String {
+    return when (communityId) {
+        "pecinta_matematika" ->
+                "📜 Peraturan Grup Pecinta Matematika:\n" +
+                        "Fokus Produktif – Bahas konsep, rumus, dan pembahasan soal.\n" +
+                        "Tanya yang Jelas – Sertakan langkah pengerjaan/foto soal bila perlu.\n" +
+                        "Aksi > Wacana – Share progress latihan harian.\n" +
+                        "Saling Dukung – Koreksi boleh, wajib sopan.\n" +
+                        "Minim Spam – Off-topic seperlunya."
+        "pecinta_fisika" ->
+                "📜 Peraturan Grup Pecinta Fisika:\n" +
+                        "Fokus Produktif – Bahas teori, eksperimen, dan latihan soal.\n" +
+                        "Pakai Satuan – Biasakan tulis satuan & langkah perhitungan.\n" +
+                        "Aksi > Wacana – Share progress belajarmu.\n" +
+                        "Saling Dukung – Diskusi sehat, bukan debat kusir.\n" +
+                        "Minim Spam – Off-topic seperlunya."
+        "pecinta_kimia" ->
+                "📜 Peraturan Grup Pecinta Kimia:\n" +
+                        "Fokus Produktif – Bahas reaksi, konsep, dan latihan soal.\n" +
+                        "Jujur Praktikum – Share hasil & proses, bukan asal jawab.\n" +
+                        "Aksi > Wacana – Bagikan rangkuman/flashcard yang kamu buat.\n" +
+                        "Saling Dukung – Jelaskan pelan-pelan untuk yang masih bingung.\n" +
+                        "Minim Spam – Off-topic seperlunya."
+        "pecinta_biologi" ->
+                "📜 Peraturan Grup Pecinta Biologi:\n" +
+                        "Fokus Produktif – Bahas biologi, alam & kehidupan.\n" +
+                        "Sumber Jelas – Kalau share fakta/berita, sertakan sumber.\n" +
+                        "Aksi > Wacana – Share catatan, gambar, atau rangkuman.\n" +
+                        "Saling Dukung – Tanya jawab sopan dan jelas.\n" +
+                        "Minim Spam – Off-topic seperlunya."
+        "pecinta_informatika" ->
+                "📜 Peraturan Grup Pecinta Informatika:\n" +
+                        "Fokus Produktif – Bahas coding, algoritma, dan teknologi.\n" +
+                        "Kasih Konteks – Sertakan error/log/screenshot kalau tanya bug.\n" +
+                        "Aksi > Wacana – Share project kecil atau progress belajar.\n" +
+                        "Saling Dukung – Review code boleh, jangan merendahkan.\n" +
+                        "Minim Spam – Off-topic seperlunya."
+        "pecinta_olahraga" ->
+                "📜 Peraturan Grup Pecinta Olahraga:\n" +
+                        "Fokus Sehat – Bahas latihan, progres, dan kebiasaan sehat.\n" +
+                        "No Toxic – Dukung progres orang, jangan body shaming.\n" +
+                        "Aksi > Wacana – Share jadwal latihan & bukti konsistensi.\n" +
+                        "Safety First – Jangan saranin hal ekstrem/berbahaya.\n" +
+                        "Minim Spam – Off-topic seperlunya."
+        else ->
+                "📜 Peraturan Grup:\n" +
+                        "Fokus Produktif – Bahas topik komunitas.\n" +
+                        "Saling Dukung – Diskusi sopan.\n" +
+                        "Minim Spam – Off-topic seperlunya."
+    }
+}
+
 // ──────────────────────────────────────────────────────────────────────────────
 // KOMUNITAS DISCOVER CARD
 // ──────────────────────────────────────────────────────────────────────────────
 
 @Composable
 fun KomunitasDiscoverCard(
-    komunitas: CommunityData,
-    isJoining: Boolean = false,
-    onJoin: () -> Unit = {}
+        komunitas: CommunityData,
+        isJoining: Boolean = false,
+        onJoin: () -> Unit = {}
 ) {
     val context = LocalContext.current
-    val iconResId = remember(komunitas.iconRes) {
-        if (komunitas.iconRes.isNotBlank())
-            context.resources.getIdentifier(komunitas.iconRes, "drawable", context.packageName)
-        else 0
-    }
+    val iconResId =
+            remember(komunitas.iconRes) {
+                if (komunitas.iconRes.isNotBlank())
+                        context.resources.getIdentifier(
+                                komunitas.iconRes,
+                                "drawable",
+                                context.packageName
+                        )
+                else 0
+            }
 
     Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(20.dp))
-            .background(Color(0xFFFFCC00))
-            .padding(horizontal = 16.dp, vertical = 14.dp)
+            modifier =
+                    Modifier.fillMaxWidth()
+                            .clip(RoundedCornerShape(20.dp))
+                            .background(Color(0xFFFFCC00))
+                            .padding(horizontal = 16.dp, vertical = 14.dp)
     ) {
         Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             // Icon komunitas
             Box(
-                modifier = Modifier
-                    .size(52.dp)
-                    .clip(RoundedCornerShape(12.dp))
-                    .background(Color.White),
-                contentAlignment = Alignment.Center
+                    modifier =
+                            Modifier.size(52.dp)
+                                    .clip(RoundedCornerShape(12.dp))
+                                    .background(Color.White),
+                    contentAlignment = Alignment.Center
             ) {
                 if (iconResId != 0) {
                     Image(
-                        painter = painterResource(id = iconResId),
-                        contentDescription = komunitas.name,
-                        modifier = Modifier.size(36.dp),
-                        contentScale = ContentScale.Fit
+                            painter = painterResource(id = iconResId),
+                            contentDescription = komunitas.name,
+                            modifier = Modifier.size(36.dp),
+                            contentScale = ContentScale.Fit
                     )
                 } else {
                     Text(
-                        text = komunitas.name.firstOrNull()?.uppercase() ?: "?",
-                        style = TextStyle(
-                            fontSize = 18.sp,
-                            fontFamily = FontFamily(Font(R.font.poppins_bold)),
-                            fontWeight = FontWeight(700),
-                            color = Neutral900
-                        )
+                            text = komunitas.name.firstOrNull()?.uppercase() ?: "?",
+                            style =
+                                    TextStyle(
+                                            fontSize = 18.sp,
+                                            fontFamily = FontFamily(Font(R.font.poppins_bold)),
+                                            fontWeight = FontWeight(700),
+                                            color = Neutral900
+                                    )
                     )
                 }
             }
 
             // Nama komunitas
             Text(
-                text = komunitas.name,
-                modifier = Modifier.weight(1f),
-                style = TextStyle(
-                    fontSize = 15.sp,
-                    fontFamily = FontFamily(Font(R.font.poppins_bold)),
-                    fontWeight = FontWeight(700),
-                    color = Color.White
-                )
+                    text = komunitas.name,
+                    modifier = Modifier.weight(1f),
+                    style =
+                            TextStyle(
+                                    fontSize = 15.sp,
+                                    fontFamily = FontFamily(Font(R.font.poppins_bold)),
+                                    fontWeight = FontWeight(700),
+                                    color = Color.White
+                            )
             )
 
             // Tombol Ikuti
             if (isJoining) {
                 Box(
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(12.dp))
-                        .background(Color(0xFFFFDD00))
-                        .padding(horizontal = 18.dp, vertical = 8.dp),
-                    contentAlignment = Alignment.Center
+                        modifier =
+                                Modifier.clip(RoundedCornerShape(12.dp))
+                                        .background(Color(0xFFFFDD00))
+                                        .padding(horizontal = 18.dp, vertical = 8.dp),
+                        contentAlignment = Alignment.Center
                 ) {
                     CircularProgressIndicator(
-                        modifier = Modifier.size(16.dp),
-                        color = Neutral900,
-                        strokeWidth = 2.dp
+                            modifier = Modifier.size(16.dp),
+                            color = Neutral900,
+                            strokeWidth = 2.dp
                     )
                 }
             } else if (komunitas.isJoined) {
                 Box(
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(12.dp))
-                        .background(Color.White.copy(alpha = 0.3f))
-                        .padding(horizontal = 14.dp, vertical = 8.dp),
-                    contentAlignment = Alignment.Center
+                        modifier =
+                                Modifier.clip(RoundedCornerShape(12.dp))
+                                        .background(Color.White.copy(alpha = 0.3f))
+                                        .padding(horizontal = 14.dp, vertical = 8.dp),
+                        contentAlignment = Alignment.Center
                 ) {
                     Text(
-                        text = "Bergabung ✓",
-                        style = TextStyle(
-                            fontSize = 12.sp,
-                            fontFamily = FontFamily(Font(R.font.poppins_bold)),
-                            fontWeight = FontWeight(700),
-                            color = Color.White
-                        )
+                            text = "Bergabung ✓",
+                            style =
+                                    TextStyle(
+                                            fontSize = 12.sp,
+                                            fontFamily = FontFamily(Font(R.font.poppins_bold)),
+                                            fontWeight = FontWeight(700),
+                                            color = Color.White
+                                    )
                     )
                 }
             } else {
                 Box(
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(12.dp))
-                        .background(Color(0xFFFFDD00))
-                        .border(
-                            width = 1.dp,
-                            color = Color(0xFFE6B800),
-                            shape = RoundedCornerShape(12.dp)
-                        )
-                        .clickable { onJoin() }
-                        .padding(horizontal = 18.dp, vertical = 8.dp),
-                    contentAlignment = Alignment.Center
+                        modifier =
+                                Modifier.clip(RoundedCornerShape(12.dp))
+                                        .background(Color(0xFFFFDD00))
+                                        .border(
+                                                width = 1.dp,
+                                                color = Color(0xFFE6B800),
+                                                shape = RoundedCornerShape(12.dp)
+                                        )
+                                        .clickable { onJoin() }
+                                        .padding(horizontal = 18.dp, vertical = 8.dp),
+                        contentAlignment = Alignment.Center
                 ) {
                     Text(
-                        text = "Ikuti",
-                        style = TextStyle(
-                            fontSize = 13.sp,
-                            fontFamily = FontFamily(Font(R.font.poppins_bold)),
-                            fontWeight = FontWeight(700),
-                            color = Neutral900
-                        )
+                            text = "Ikuti",
+                            style =
+                                    TextStyle(
+                                            fontSize = 13.sp,
+                                            fontFamily = FontFamily(Font(R.font.poppins_bold)),
+                                            fontWeight = FontWeight(700),
+                                            color = Neutral900
+                                    )
                     )
                 }
             }
