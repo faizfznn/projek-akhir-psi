@@ -22,6 +22,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -88,22 +89,14 @@ fun AchievementPage(
 
     Box(modifier = Modifier.fillMaxSize()) {
 
-        Column(
-            verticalArrangement = Arrangement.Top,
-            horizontalAlignment = Alignment.CenterHorizontally,
-            modifier = Modifier
-                .fillMaxSize()
-                .background(Color.White)
-                .verticalScroll(scrollState)
-        ) {
+        Column(modifier = Modifier.fillMaxSize()) {
             // ── Header ──────────────────────────────────────────────────
             Row(
-                horizontalArrangement = Arrangement.spacedBy(16.dp, Alignment.Start),
+                horizontalArrangement = Arrangement.spacedBy(12.dp, Alignment.Start),
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(60.dp)
-                    .padding(start = 16.dp, end = 16.dp, top = 16.dp)
+                    .padding(start = 16.dp, top = 48.dp, end = 16.dp, bottom = 12.dp)
             ) {
                 IconButton(
                     onClick = {
@@ -112,8 +105,8 @@ fun AchievementPage(
                     },
                     modifier = Modifier
                         .size(40.dp)
-                        .background(color = Color(0xFFFFC300), shape = RoundedCornerShape(size = 44.dp))
-                        .border(width = 1.dp, color = Color(0xFF303030), shape = RoundedCornerShape(size = 44.dp))
+                        .background(color = Color(0xFFFFC300), shape = CircleShape)
+                        .border(width = 1.dp, color = Color(0xFF303030), shape = CircleShape)
                 ) {
                     Icon(
                         imageVector = Icons.AutoMirrored.Filled.ArrowBack,
@@ -156,7 +149,16 @@ fun AchievementPage(
                 }
             }
 
-            Spacer(modifier = Modifier.height(24.dp))
+            Column(
+                verticalArrangement = Arrangement.Top,
+                horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxWidth()
+                    .background(Color.White)
+                    .verticalScroll(scrollState)
+            ) {
+                Spacer(modifier = Modifier.height(12.dp))
 
             // ── Loading State ────────────────────────────────────────────
             if (state.isLoading) {
@@ -259,6 +261,7 @@ fun AchievementPage(
 
             Spacer(modifier = Modifier.height(32.dp))
         }
+    }
 
         // ── POPUP Achievement Unlock (REAKTIF — muncul otomatis saat unlock) ──
         // Dipicu oleh showUnlockBanner di AchievementViewModel

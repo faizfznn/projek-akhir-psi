@@ -200,22 +200,34 @@ fun ProfilScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .verticalScroll(rememberScrollState())
-            .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         Row(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(start = 16.dp, top = 48.dp, end = 16.dp, bottom = 12.dp),
             horizontalArrangement = if (isMyProfile) Arrangement.SpaceBetween else Arrangement.Start,
             verticalAlignment = Alignment.CenterVertically
         ) {
             if (!isMyProfile) {
-                IconButton(onClick = { navController?.popBackStack() }) {
-                    Icon(imageVector = Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Kembali")
+                IconButton(
+                    onClick = { navController?.popBackStack() },
+                    modifier = Modifier
+                        .size(40.dp)
+                        .border(1.dp, Neutral300, CircleShape)
+                ) {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                        contentDescription = "Kembali",
+                        tint = Neutral800
+                    )
                 }
-                Spacer(modifier = Modifier.width(8.dp))
+                Spacer(modifier = Modifier.width(12.dp))
             }
-            Text(text = "Profile", style = MaterialTheme.typography.titleLarge, color = Neutral900)
+            Text(
+                text = "Profile",
+                style = PoppinsH5Bold,
+                color = Neutral900
+            )
             
             if (isMyProfile) {
                 IconButton(
@@ -226,12 +238,24 @@ fun ProfilScreen(
                             navController.navigate(com.kelompok2.scarla.navigation.Screen.Settings.route)
                         }
                     },
-                    modifier = Modifier.size(40.dp)
+                    modifier = Modifier
+                        .size(40.dp)
+                        .border(1.dp, Neutral300, CircleShape)
                 ) {
                     Icon(imageVector = Icons.Default.Settings, contentDescription = "Pengaturan", tint = Neutral800)
                 }
             }
         }
+
+        Column(
+            modifier = Modifier
+                .weight(1f)
+                .fillMaxWidth()
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = 16.dp)
+                .padding(bottom = 16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
 
         when {
             uiState.isLoading -> {
@@ -330,6 +354,7 @@ fun ProfilScreen(
             Text(text = it, color = MaterialTheme.colorScheme.error, style = PoppinsTinyRegular)
         }
     }
+}
 }
 
 @Composable

@@ -137,11 +137,15 @@ fun QuizScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .background(Color(0xFFF5F5F5))
-                .padding(18.dp)
         ) {
 
             // HEADER
-            Row(verticalAlignment = Alignment.CenterVertically) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(start = 18.dp, top = 48.dp, end = 18.dp, bottom = 12.dp)
+            ) {
                 IconButton(onClick = { navController.popBackStack() }) {
                     Icon(imageVector = Icons.Default.ArrowBack, contentDescription = null)
                 }
@@ -153,7 +157,12 @@ fun QuizScreen(
                 )
             }
 
-            Spacer(modifier = Modifier.height(14.dp))
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(1f)
+                    .padding(start = 18.dp, end = 18.dp, bottom = 18.dp)
+            ) {
 
             // PROGRESS
             Card(
@@ -351,6 +360,7 @@ fun QuizScreen(
         }
     }
 }
+}
 
 @Composable
 fun ResultScreen(correct: Int, wrong: Int, passingScore: Int, totalQuestions: Int, onBack: () -> Unit) {
@@ -368,7 +378,7 @@ fun ResultScreen(correct: Int, wrong: Int, passingScore: Int, totalQuestions: In
         modifier = Modifier
             .fillMaxSize()
             .background(Color(0xFFF5F5F5))
-            .padding(24.dp)
+            .padding(start = 24.dp, top = 48.dp, end = 24.dp, bottom = 24.dp)
     ) {
 
         Column(

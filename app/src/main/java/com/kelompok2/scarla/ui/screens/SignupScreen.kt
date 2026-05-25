@@ -45,9 +45,7 @@ fun SignupScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .verticalScroll(rememberScrollState())
     ) {
-        Spacer(modifier = Modifier.height(8.dp))
         IconButton(
             onClick = onBack,
             modifier = Modifier
@@ -62,15 +60,16 @@ fun SignupScreen(
             )
         }
 
-        Spacer(modifier = Modifier.height(24.dp))
-
         Column(
             modifier = Modifier
                 .fillMaxWidth()
+                .weight(1f)
+                .verticalScroll(rememberScrollState())
                 .padding(horizontal = 24.dp)
                 .padding(bottom = 24.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
+            Spacer(modifier = Modifier.height(24.dp))
             Text(
                 text = "Daftar Akun",
                 style = PoppinsH5Bold,

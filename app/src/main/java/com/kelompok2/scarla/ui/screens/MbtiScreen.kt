@@ -78,10 +78,7 @@ fun MbtiScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .verticalScroll(rememberScrollState())
-            .padding(bottom = 24.dp)
     ) {
-        Spacer(modifier = Modifier.height(8.dp))
         IconButton(
             onClick = onBack,
             modifier = Modifier
@@ -99,7 +96,9 @@ fun MbtiScreen(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 24.dp),
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = 24.dp)
+                .padding(bottom = 24.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Spacer(modifier = Modifier.height(20.dp))

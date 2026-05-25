@@ -85,7 +85,7 @@ fun InformatikaScreen(navController: NavController) {
         Card(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(12.dp)
+                .padding(start = 12.dp, top = 48.dp, end = 12.dp, bottom = 12.dp)
                 .shadow(6.dp, RoundedCornerShape(12.dp)),
             shape = RoundedCornerShape(12.dp),
             colors = CardDefaults.cardColors(

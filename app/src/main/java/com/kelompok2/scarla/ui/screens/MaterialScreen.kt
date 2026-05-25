@@ -139,7 +139,7 @@ fun MaterialScreen(
         Card(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(12.dp),
+                .padding(start = 12.dp, top = 48.dp, end = 12.dp, bottom = 12.dp),
             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
             border = BorderStroke(1.dp, Neutral200)
         ) {

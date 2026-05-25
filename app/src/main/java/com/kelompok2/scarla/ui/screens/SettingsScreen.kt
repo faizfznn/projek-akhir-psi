@@ -70,13 +70,12 @@ fun SettingsScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .verticalScroll(rememberScrollState())
-            .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         // Header
         Row(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(start = 16.dp, top = 48.dp, end = 16.dp, bottom = 12.dp),
             horizontalArrangement = Arrangement.spacedBy(12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -99,32 +98,40 @@ fun SettingsScreen(
             )
         }
 
-        Spacer(modifier = Modifier.height(12.dp))
+        // Scrollable content
+        Column(
+            modifier = Modifier
+                .weight(1f)
+                .fillMaxWidth()
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = 16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            // Settings Items
+            SettingMenuItem(
+                title = "Notifikasi",
+                icon = Icons.Default.Notifications,
+                onClick = { /* Handle notification settings */ }
+            )
 
-        // Settings Items
-        SettingMenuItem(
-            title = "Notifikasi",
-            icon = Icons.Default.Notifications,
-            onClick = { /* Handle notification settings */ }
-        )
+            SettingMenuItem(
+                title = "Setelah Obrokan",
+                icon = Icons.Default.Settings,
+                onClick = { /* Handle other settings */ }
+            )
 
-        SettingMenuItem(
-            title = "Setelah Obrokan",
-            icon = Icons.Default.Settings,
-            onClick = { /* Handle other settings */ }
-        )
+            Spacer(modifier = Modifier.weight(1f))
 
-        Spacer(modifier = Modifier.weight(1f))
+            // Log Out Button
+            AppButton(
+                text = "Log Out",
+                buttonType = ButtonType.PRIMARY,
+                onClick = { showLogoutConfirmation = true },
+                modifier = Modifier.fillMaxWidth()
+            )
 
-        // Log Out Button
-        AppButton(
-            text = "Log Out",
-            buttonType = ButtonType.PRIMARY,
-            onClick = { showLogoutConfirmation = true },
-            modifier = Modifier.fillMaxWidth()
-        )
-
-        Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(24.dp))
+        }
     }
 
     // Logout Confirmation Bottom Sheet
