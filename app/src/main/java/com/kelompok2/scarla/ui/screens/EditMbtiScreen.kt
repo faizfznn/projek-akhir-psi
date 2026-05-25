@@ -6,6 +6,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -145,55 +146,58 @@ fun EditMbtiScreen(
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            LazyVerticalGrid(
-                columns = GridCells.Fixed(4),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .weight(1f),
-                contentPadding = PaddingValues(2.dp),
-                horizontalArrangement = Arrangement.spacedBy(10.dp),
+            val chunkedOptions = remember { mbtiOptions.chunked(4) }
+            Column(
+                modifier = Modifier.fillMaxWidth(),
                 verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
-                items(mbtiOptions.size) { index ->
-                    val option = mbtiOptions[index]
-                    val selected = selectedMbti == option
-
-                    Box(
-                        modifier = Modifier
-                            .height(64.dp)
-                            .background(
-                                color = if (selected) Primary50 else Color.White,
-                                shape = RoundedCornerShape(14.dp)
-                            )
-                            .border(
-                                width = if (selected) 2.dp else 1.dp,
-                                color = if (selected) selectedBorderColor else Neutral300,
-                                shape = RoundedCornerShape(14.dp)
-                            )
-                            .clickable { selectedMbti = option },
-                        contentAlignment = Alignment.Center
+                chunkedOptions.forEach { rowItems ->
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(10.dp)
                     ) {
-                        Text(
-                            text = option,
-                            style = PoppinsTinyRegular,
-                            color = Neutral900
-                        )
+                        rowItems.forEach { option ->
+                            val selected = selectedMbti == option
 
-                        if (selected) {
                             Box(
                                 modifier = Modifier
-                                    .align(Alignment.TopEnd)
-                                    .padding(4.dp)
-                                    .size(18.dp)
-                                    .background(selectedBorderColor, CircleShape),
+                                    .weight(1f)
+                                    .height(64.dp)
+                                    .background(
+                                        color = if (selected) Primary50 else Color.White,
+                                        shape = RoundedCornerShape(14.dp)
+                                    )
+                                    .border(
+                                        width = if (selected) 2.dp else 1.dp,
+                                        color = if (selected) selectedBorderColor else Neutral300,
+                                        shape = RoundedCornerShape(14.dp)
+                                    )
+                                    .clickable { selectedMbti = option },
                                 contentAlignment = Alignment.Center
                             ) {
-                                Icon(
-                                    imageVector = Icons.Default.Check,
-                                    contentDescription = "Terpilih",
-                                    tint = Color.White,
-                                    modifier = Modifier.size(12.dp)
+                                Text(
+                                    text = option,
+                                    style = PoppinsTinyRegular,
+                                    color = Neutral900
                                 )
+
+                                if (selected) {
+                                    Box(
+                                        modifier = Modifier
+                                            .align(Alignment.TopEnd)
+                                            .padding(4.dp)
+                                            .size(18.dp)
+                                            .background(selectedBorderColor, CircleShape),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Default.Check,
+                                            contentDescription = "Terpilih",
+                                            tint = Color.White,
+                                            modifier = Modifier.size(12.dp)
+                                        )
+                                    }
+                                }
                             }
                         }
                     }
