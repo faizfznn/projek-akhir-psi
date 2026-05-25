@@ -33,7 +33,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.Campaign
-import androidx.compose.material.icons.filled.Forum
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material3.Icon
 import androidx.compose.material3.OutlinedTextField
@@ -65,15 +64,12 @@ import com.kelompok2.scarla.R
 import com.kelompok2.scarla.ui.theme.Neutral500
 import com.kelompok2.scarla.ui.theme.Neutral600
 import com.kelompok2.scarla.ui.theme.Neutral900
+import com.kelompok2.scarla.ui.utils.introductionTextForCommunity
 import com.kelompok2.scarla.ui.viewmodel.CommunityMessage
 import com.kelompok2.scarla.ui.viewmodel.KomunitasViewModel
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
-
-// ──────────────────────────────────────────────────────────────────────────────
-// MAIN SCREEN
-// ──────────────────────────────────────────────────────────────────────────────
 
 @Composable
 fun KomunitasRoomPage(
@@ -81,6 +77,7 @@ fun KomunitasRoomPage(
     channelId: String,
     communityName: String,
     channelName: String,
+    readOnly: Boolean = false,
     navController: NavController? = null,
     komunitasViewModel: KomunitasViewModel = viewModel()
 ) {
@@ -88,21 +85,25 @@ fun KomunitasRoomPage(
     val uiState by komunitasViewModel.uiState.collectAsStateWithLifecycle()
     val currentUid = FirebaseAuth.getInstance().currentUser?.uid ?: ""
 
-    // Start listening to messages when entering the room
-    LaunchedEffect(communityId, channelId) {
-        komunitasViewModel.openChannel(communityId, channelId, communityName, channelName)
-    }
-
-    // Clean up listener when leaving the room
-    DisposableEffect(Unit) {
-        onDispose {
-            komunitasViewModel.closeChannel()
+    // Start listening to messages when entering the room (hanya kalau bukan readOnly)
+    LaunchedEffect(communityId, channelId, readOnly) {
+        if (!readOnly) {
+            komunitasViewModel.openChannel(communityId, channelId, communityName, channelName)
         }
     }
 
-    // Auto-scroll to bottom when new messages arrive
-    LaunchedEffect(uiState.messages.size) {
-        if (uiState.messages.isNotEmpty()) {
+    // Clean up listener when leaving the room (hanya kalau bukan readOnly)
+    DisposableEffect(readOnly) {
+        onDispose {
+            if (!readOnly) {
+                komunitasViewModel.closeChannel()
+            }
+        }
+    }
+
+    // Auto-scroll to bottom when new messages arrive (hanya kalau bukan readOnly)
+    LaunchedEffect(uiState.messages.size, readOnly) {
+        if (!readOnly && uiState.messages.isNotEmpty()) {
             listState.animateScrollToItem(uiState.messages.size - 1)
         }
     }
@@ -114,7 +115,7 @@ fun KomunitasRoomPage(
             .navigationBarsPadding()
             .imePadding()
     ) {
-        // ── LOGO SCARLA (White background) ─────────────────────────────
+        // ── LOGO SCARLA (White background)
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -129,54 +130,80 @@ fun KomunitasRoomPage(
             )
         }
 
-        // ── HEADER ─────────────────────────────────────────────────────
+        // ── HEADER
         KomunitasRoomHeader(
             communityName = communityName,
             channelName = channelName,
             onBack = { navController?.popBackStack() }
         )
 
-        // ── MESSAGE LIST ───────────────────────────────────────────────
-        LazyColumn(
-            state = listState,
-            modifier = Modifier.weight(1f),
-            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            if (uiState.messages.isEmpty()) {
-                item {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(vertical = 32.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(
-                            text = "Belum ada pesan. Mulai percakapan! 💬",
-                            style = TextStyle(
-                                fontSize = 14.sp,
-                                fontFamily = FontFamily(Font(R.font.poppins_regular)),
-                                color = Color.White.copy(alpha = 0.7f)
+        if (readOnly) {
+            // ✅ INTRODUCTION MODE (read-only): tampilkan rules saja
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp)
+                    .clip(RoundedCornerShape(16.dp))
+                    .background(Color.White)
+                    .padding(16.dp)
+            ) {
+                Text(
+                    text = introductionTextForCommunity(communityId),
+                    style = TextStyle(
+                        fontSize = 14.sp,
+                        fontFamily = FontFamily(Font(R.font.poppins_regular)),
+                        color = Neutral900
+                    )
+                )
+            }
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            // supaya layout tetap “full height” dan tidak terlihat kosong aneh
+            Spacer(modifier = Modifier.weight(1f))
+        } else {
+            // ── MESSAGE LIST (ruang diskusi)
+            LazyColumn(
+                state = listState,
+                modifier = Modifier.weight(1f),
+                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 16.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                if (uiState.messages.isEmpty()) {
+                    item {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 32.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = "Belum ada pesan. Mulai percakapan! 💬",
+                                style = TextStyle(
+                                    fontSize = 14.sp,
+                                    fontFamily = FontFamily(Font(R.font.poppins_regular)),
+                                    color = Color.White.copy(alpha = 0.7f)
+                                )
                             )
+                        }
+                    }
+                } else {
+                    items(uiState.messages, key = { it.id }) { msg ->
+                        CommunityMessageBubble(
+                            message = msg,
+                            isMe = msg.senderUid == currentUid
                         )
                     }
                 }
-            } else {
-                items(uiState.messages, key = { it.id }) { msg ->
-                    CommunityMessageBubble(
-                        message = msg,
-                        isMe = msg.senderUid == currentUid
-                    )
-                }
             }
-        }
 
-        // ── INPUT BAR ──────────────────────────────────────────────────
-        KomunitasInputBar(
-            value = uiState.currentMessage,
-            onValueChange = { komunitasViewModel.onMessageChange(it) },
-            onSend = { komunitasViewModel.sendMessage() }
-        )
+            // ── INPUT BAR (ruang diskusi)
+            KomunitasInputBar(
+                value = uiState.currentMessage,
+                onValueChange = { komunitasViewModel.onMessageChange(it) },
+                onSend = { komunitasViewModel.sendMessage() }
+            )
+        }
     }
 }
 
@@ -203,7 +230,6 @@ private fun KomunitasRoomHeader(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            // ── Back Button ───────────────────────────────────────────
             Box(
                 modifier = Modifier
                     .size(44.dp)
@@ -220,7 +246,6 @@ private fun KomunitasRoomHeader(
                 )
             }
 
-            // ── Channel Icon + Name (Tengah) ──────────────────────────
             Row(
                 modifier = Modifier
                     .weight(1f)
@@ -228,7 +253,6 @@ private fun KomunitasRoomHeader(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                // Megaphone icon dalam lingkaran kuning gelap
                 Box(
                     modifier = Modifier
                         .size(52.dp)
@@ -267,10 +291,9 @@ private fun KomunitasRoomHeader(
                 }
             }
 
-            Spacer(modifier = Modifier.width(44.dp)) // balance back button width
+            Spacer(modifier = Modifier.width(44.dp))
         }
 
-        // ── Info Button (pojok kanan atas — rounded corner) ───────────
         Box(
             modifier = Modifier
                 .align(Alignment.TopEnd)
@@ -289,7 +312,7 @@ private fun KomunitasRoomHeader(
                         .size(44.dp)
                         .clip(CircleShape)
                         .background(Color(0xFFFFC300))
-                        .clickable { /* TODO: show group info */ },
+                        .clickable { /* TODO */ },
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
@@ -323,7 +346,6 @@ private fun CommunityMessageBubble(message: CommunityMessage, isMe: Boolean) {
         exit = fadeOut()
     ) {
         if (isMe) {
-            // Pesan kita — rata kanan, tanpa nama & avatar
             Column(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalAlignment = Alignment.End
@@ -357,13 +379,11 @@ private fun CommunityMessageBubble(message: CommunityMessage, isMe: Boolean) {
                 }
             }
         } else {
-            // Pesan orang lain — rata kiri, dengan avatar & nama
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.Top,
                 horizontalArrangement = Arrangement.spacedBy(10.dp)
             ) {
-                // Avatar (initial-based)
                 Box(
                     modifier = Modifier
                         .size(44.dp)
@@ -382,12 +402,10 @@ private fun CommunityMessageBubble(message: CommunityMessage, isMe: Boolean) {
                     )
                 }
 
-                // Bubble
                 Column(
                     modifier = Modifier.widthIn(max = 260.dp),
                     verticalArrangement = Arrangement.spacedBy(4.dp)
                 ) {
-                    // Nama pengirim
                     Text(
                         text = message.senderName,
                         style = TextStyle(

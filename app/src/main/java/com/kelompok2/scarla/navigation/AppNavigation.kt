@@ -14,14 +14,9 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.google.firebase.firestore.FirebaseFirestore
 import com.kelompok2.scarla.firebase.FirestoreInitializer
+import com.kelompok2.scarla.ui.screens.*
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
-import com.kelompok2.scarla.ui.screens.*
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.mutableStateListOf
-import androidx.compose.runtime.saveable.listSaver
-import androidx.compose.runtime.toMutableStateList
-import androidx.compose.runtime.saveable.rememberSaveable
 
 private val firestore by lazy { FirebaseFirestore.getInstance() }
 
@@ -55,11 +50,19 @@ sealed class Screen(val route: String) {
             return "chat_room/$peerUid/$encodedName"
         }
     }
-    object KomunitasRoom : Screen("komunitas_room/{communityId}/{channelId}/{communityName}/{channelName}") {
-        fun createRoute(communityId: String, channelId: String, communityName: String, channelName: String): String {
-            val encodedCommunityName = java.net.URLEncoder.encode(communityName, "UTF-8")
-            val encodedChannelName = java.net.URLEncoder.encode(channelName, "UTF-8")
-            return "komunitas_room/$communityId/$channelId/$encodedCommunityName/$encodedChannelName"
+    object KomunitasRoom :
+            Screen(
+                    route =
+                            "komunitas_room/{communityId}/{channelId}/{communityName}/{channelName}/{readOnly}"
+            ) {
+        fun createRoute(
+                communityId: String,
+                channelId: String,
+                communityName: String,
+                channelName: String,
+                readOnly: Boolean = false
+        ): String {
+            return "komunitas_room/$communityId/$channelId/$communityName/$channelName/$readOnly"
         }
     }
     object JelajahiKomunitas : Screen("jelajahi_komunitas")
@@ -75,298 +78,288 @@ fun AppNavigation() {
 
     // Removed HTML-specific local states
     NavHost(
-        navController = navController,
-        startDestination = Screen.Splash.route,
-        enterTransition = {
-            slideIntoContainer(
-                towards = AnimatedContentTransitionScope.SlideDirection.Left,
-                animationSpec = tween(320)
-            ) + fadeIn(animationSpec = tween(220))
-        },
-        exitTransition = {
-            slideOutOfContainer(
-                towards = AnimatedContentTransitionScope.SlideDirection.Left,
-                animationSpec = tween(320)
-            ) + fadeOut(animationSpec = tween(220))
-        },
-        popEnterTransition = {
-            slideIntoContainer(
-                towards = AnimatedContentTransitionScope.SlideDirection.Right,
-                animationSpec = tween(320)
-            ) + fadeIn(animationSpec = tween(220))
-        },
-        popExitTransition = {
-            slideOutOfContainer(
-                towards = AnimatedContentTransitionScope.SlideDirection.Right,
-                animationSpec = tween(320)
-            ) + fadeOut(animationSpec = tween(220))
-        }
+            navController = navController,
+            startDestination = Screen.Splash.route,
+            enterTransition = {
+                slideIntoContainer(
+                        towards = AnimatedContentTransitionScope.SlideDirection.Left,
+                        animationSpec = tween(320)
+                ) + fadeIn(animationSpec = tween(220))
+            },
+            exitTransition = {
+                slideOutOfContainer(
+                        towards = AnimatedContentTransitionScope.SlideDirection.Left,
+                        animationSpec = tween(320)
+                ) + fadeOut(animationSpec = tween(220))
+            },
+            popEnterTransition = {
+                slideIntoContainer(
+                        towards = AnimatedContentTransitionScope.SlideDirection.Right,
+                        animationSpec = tween(320)
+                ) + fadeIn(animationSpec = tween(220))
+            },
+            popExitTransition = {
+                slideOutOfContainer(
+                        towards = AnimatedContentTransitionScope.SlideDirection.Right,
+                        animationSpec = tween(320)
+                ) + fadeOut(animationSpec = tween(220))
+            }
     ) {
         // 1. Rute Splash
         composable(Screen.Splash.route) {
-            SplashScreen(onTimeout = {
-                navController.navigate(Screen.Onboarding.route) {
-                    popUpTo(Screen.Splash.route) { inclusive = true }
-                }
-            })
+            SplashScreen(
+                    onTimeout = {
+                        navController.navigate(Screen.Onboarding.route) {
+                            popUpTo(Screen.Splash.route) { inclusive = true }
+                        }
+                    }
+            )
         }
 
         // 2. Rute Onboarding
         composable(Screen.Onboarding.route) {
-            OnboardingScreen(onFinished = {
-                navController.navigate(Screen.AuthChoice.route) {
-                    popUpTo(Screen.Onboarding.route) { inclusive = true }
-                }
-            })
+            OnboardingScreen(
+                    onFinished = {
+                        navController.navigate(Screen.AuthChoice.route) {
+                            popUpTo(Screen.Onboarding.route) { inclusive = true }
+                        }
+                    }
+            )
         }
 
         // 3. Rute AuthChoice (Pilihan daftar / masuk)
         composable(Screen.AuthChoice.route) {
             AuthChoiceScreen(
-                onBack = { navController.popBackStack() },
-                onDaftarSekarang = {
-                    navController.navigate(Screen.Signup.route)
-                },
-                onMasuk = {
-                    navController.navigate(Screen.Login.route)
-                }
+                    onBack = { navController.popBackStack() },
+                    onDaftarSekarang = { navController.navigate(Screen.Signup.route) },
+                    onMasuk = { navController.navigate(Screen.Login.route) }
             )
         }
 
         // 4. Rute Signup
         composable(Screen.Signup.route) {
             SignupScreen(
-                onBack = { navController.popBackStack() },
-                onSignupSuccess = {
-                    navController.navigate(Screen.Login.route) {
-                        popUpTo(Screen.AuthChoice.route) { inclusive = true }
+                    onBack = { navController.popBackStack() },
+                    onSignupSuccess = {
+                        navController.navigate(Screen.Login.route) {
+                            popUpTo(Screen.AuthChoice.route) { inclusive = true }
+                        }
+                    },
+                    onNavigateToLogin = {
+                        navController.navigate(Screen.Login.route) {
+                            popUpTo(Screen.Signup.route) { inclusive = true }
+                        }
                     }
-                },
-                onNavigateToLogin = {
-                    navController.navigate(Screen.Login.route) {
-                        popUpTo(Screen.Signup.route) { inclusive = true }
-                    }
-                }
             )
         }
 
         // 5. Rute Login
         composable(Screen.Login.route) {
             LoginScreen(
-                onBack = { navController.popBackStack() },
-                onLoginSuccess = { uid ->
-                    scope.launch {
-                        // Pastikan sub-koleksi (streaks, achievements) sudah ada
-                        // untuk user baru maupun user lama yang belum ter-inisialisasi
-                        FirestoreInitializer.ensureUserInitialized(uid)
+                    onBack = { navController.popBackStack() },
+                    onLoginSuccess = { uid ->
+                        scope.launch {
+                            // Pastikan sub-koleksi (streaks, achievements) sudah ada
+                            // untuk user baru maupun user lama yang belum ter-inisialisasi
+                            FirestoreInitializer.ensureUserInitialized(uid)
 
-                        val shouldCompleteProfile = shouldRouteToProfile(uid)
-                        navController.navigate(
-                            if (shouldCompleteProfile) Screen.ProfileSetup.route else Screen.Streak.route
-                        ) {
-                            popUpTo(Screen.AuthChoice.route) { inclusive = true }
+                            val shouldCompleteProfile = shouldRouteToProfile(uid)
+                            navController.navigate(
+                                    if (shouldCompleteProfile) Screen.ProfileSetup.route
+                                    else Screen.Streak.route
+                            ) { popUpTo(Screen.AuthChoice.route) { inclusive = true } }
+                        }
+                    },
+                    onNavigateToSignup = {
+                        navController.navigate(Screen.Signup.route) {
+                            popUpTo(Screen.Login.route) { inclusive = true }
                         }
                     }
-                },
-                onNavigateToSignup = {
-                    navController.navigate(Screen.Signup.route) {
-                        popUpTo(Screen.Login.route) { inclusive = true }
-                    }
-                }
             )
         }
 
         composable(Screen.ProfileSetup.route) {
             ProfileSetupScreen(
-                onBack = { navController.popBackStack() },
-                onContinue = {
-                    navController.navigate(Screen.EducationLevel.route)
-                }
+                    onBack = { navController.popBackStack() },
+                    onContinue = { navController.navigate(Screen.EducationLevel.route) }
             )
         }
 
         composable(Screen.EducationLevel.route) {
             EducationLevelScreen(
-                onBack = { navController.popBackStack() },
-                onContinue = {
-                    navController.navigate(Screen.Mbti.route)
-                }
+                    onBack = { navController.popBackStack() },
+                    onContinue = { navController.navigate(Screen.Mbti.route) }
             )
         }
 
         composable(Screen.Mbti.route) {
             MbtiScreen(
-                onBack = { navController.popBackStack() },
-                onContinue = {
-                    navController.navigate(Screen.Interests.route)
-                }
+                    onBack = { navController.popBackStack() },
+                    onContinue = { navController.navigate(Screen.Interests.route) }
             )
         }
 
         composable(Screen.Interests.route) {
             InterestsScreen(
-                onBack = { navController.popBackStack() },
-                onContinue = {
-                    navController.navigate(Screen.Streak.route) {
-                        popUpTo(Screen.AuthChoice.route) { inclusive = true }
+                    onBack = { navController.popBackStack() },
+                    onContinue = {
+                        navController.navigate(Screen.Streak.route) {
+                            popUpTo(Screen.AuthChoice.route) { inclusive = true }
+                        }
                     }
-                }
             )
         }
 
         composable(Screen.Streak.route) {
             ScreenStreak(
-                onContinue = {
-                    navController.navigate(Screen.Main.route) {
-                        popUpTo(Screen.Streak.route) { inclusive = true }
+                    onContinue = {
+                        navController.navigate(Screen.Main.route) {
+                            popUpTo(Screen.Streak.route) { inclusive = true }
+                        }
                     }
-                }
             )
         }
 
         // 8. Rute Main (Halaman utama setelah login)
-        composable(Screen.Main.route) {
-            MainScreen(navController = navController)
-        }
+        composable(Screen.Main.route) { MainScreen(navController = navController) }
 
-        composable(Screen.Profile.route) {
-            ProfilScreen(
-                navController = navController
-            )
-        }
+        composable(Screen.Profile.route) { ProfilScreen(navController = navController) }
 
         composable(
-            route = Screen.PeerProfile.route,
-            arguments = listOf(
-                androidx.navigation.navArgument("peerUid") { type = androidx.navigation.NavType.StringType }
-            )
+                route = Screen.PeerProfile.route,
+                arguments =
+                        listOf(
+                                androidx.navigation.navArgument("peerUid") {
+                                    type = androidx.navigation.NavType.StringType
+                                }
+                        )
         ) { backStackEntry ->
             val peerUid = backStackEntry.arguments?.getString("peerUid")
-            ProfilScreen(
-                navController = navController,
-                peerUid = peerUid
-            )
+            ProfilScreen(navController = navController, peerUid = peerUid)
         }
 
         composable(Screen.Settings.route) {
-            SettingsScreen(
-                navController = navController,
-                onBack = { navController.popBackStack() }
-            )
+            SettingsScreen(navController = navController, onBack = { navController.popBackStack() })
         }
 
         composable(Screen.EditProfile.route) {
             EditProfileScreen(
-                onBack = { navController.popBackStack() },
-                onAvatarSelect = { navController.navigate(Screen.EditAvatar.route) },
-                onSaveSuccess = { navController.popBackStack() }
+                    onBack = { navController.popBackStack() },
+                    onAvatarSelect = { navController.navigate(Screen.EditAvatar.route) },
+                    onSaveSuccess = { navController.popBackStack() }
             )
         }
 
         composable(Screen.EditAvatar.route) {
-            EditAvatarScreen(
-                onBack = { navController.popBackStack() }
-            )
+            EditAvatarScreen(onBack = { navController.popBackStack() })
         }
 
         composable(Screen.EditInterests.route) {
             EditInterestsScreen(
-                onBack = { navController.popBackStack() },
-                onSaveSuccess = { navController.popBackStack() }
+                    onBack = { navController.popBackStack() },
+                    onSaveSuccess = { navController.popBackStack() }
             )
         }
 
         composable(Screen.EditMbti.route) {
             EditMbtiScreen(
-                onBack = { navController.popBackStack() },
-                onSaveSuccess = { navController.popBackStack() }
+                    onBack = { navController.popBackStack() },
+                    onSaveSuccess = { navController.popBackStack() }
             )
         }
 
-        composable("belajar") {
-            BelajarScreen(navController = navController)
-        }
+        composable("belajar") { BelajarScreen(navController = navController) }
 
-        composable("informatika_screen") {
-            InformatikaScreen(navController = navController)
-        }
+        composable("informatika_screen") { InformatikaScreen(navController = navController) }
 
         composable(
-            route = "material_screen/{materialId}",
-            arguments = listOf(androidx.navigation.navArgument("materialId") { type = androidx.navigation.NavType.StringType })
+                route = "material_screen/{materialId}",
+                arguments =
+                        listOf(
+                                androidx.navigation.navArgument("materialId") {
+                                    type = androidx.navigation.NavType.StringType
+                                }
+                        )
         ) { backStackEntry ->
             val materialId = backStackEntry.arguments?.getString("materialId") ?: "html"
-            MaterialScreen(
-                navController = navController,
-                materialId = materialId
-            )
+            MaterialScreen(navController = navController, materialId = materialId)
         }
 
         composable(
-            route = "quiz_screen/{materialId}/{quizId}",
-            arguments = listOf(
-                androidx.navigation.navArgument("materialId") { type = androidx.navigation.NavType.StringType },
-                androidx.navigation.navArgument("quizId") { type = androidx.navigation.NavType.StringType }
-            )
+                route = "quiz_screen/{materialId}/{quizId}",
+                arguments =
+                        listOf(
+                                androidx.navigation.navArgument("materialId") {
+                                    type = androidx.navigation.NavType.StringType
+                                },
+                                androidx.navigation.navArgument("quizId") {
+                                    type = androidx.navigation.NavType.StringType
+                                }
+                        )
         ) { backStackEntry ->
             val materialId = backStackEntry.arguments?.getString("materialId") ?: "html"
             val quizId = backStackEntry.arguments?.getString("quizId") ?: "html_quiz"
-            QuizScreen(
-                navController = navController,
-                materialId = materialId,
-                quizId = quizId
-            )
+            QuizScreen(navController = navController, materialId = materialId, quizId = quizId)
         }
 
-        composable(Screen.Achievement.route) {
-            AchievementPage(navController = navController)
-        }
+        composable(Screen.Achievement.route) { AchievementPage(navController = navController) }
 
         composable(Screen.FriendRequests.route) {
             FriendRequestsScreen(navController = navController)
         }
 
         // ── Chat ─────────────────────────────────────────────────────────
-        composable(Screen.Chat.route) {
-            ChatPage(navController = navController)
-        }
+        composable(Screen.Chat.route) { ChatPage(navController = navController) }
 
         composable(
-            route = Screen.ChatRoom.route,
-            arguments = listOf(
-                androidx.navigation.navArgument("peerUid") { type = androidx.navigation.NavType.StringType },
-                androidx.navigation.navArgument("peerName") { type = androidx.navigation.NavType.StringType }
-            )
+                route = Screen.ChatRoom.route,
+                arguments =
+                        listOf(
+                                androidx.navigation.navArgument("peerUid") {
+                                    type = androidx.navigation.NavType.StringType
+                                },
+                                androidx.navigation.navArgument("peerName") {
+                                    type = androidx.navigation.NavType.StringType
+                                }
+                        )
         ) { backStackEntry ->
             val peerUid = backStackEntry.arguments?.getString("peerUid") ?: ""
             val peerName = backStackEntry.arguments?.getString("peerName") ?: ""
-            ChatRoomPage(
-                peerUid = peerUid,
-                peerName = peerName,
-                navController = navController
-            )
+            ChatRoomPage(peerUid = peerUid, peerName = peerName, navController = navController)
         }
 
         // ── Komunitas Room ─────────────────────────────────────────────
         composable(
-            route = Screen.KomunitasRoom.route,
-            arguments = listOf(
-                androidx.navigation.navArgument("communityId") { type = androidx.navigation.NavType.StringType },
-                androidx.navigation.navArgument("channelId") { type = androidx.navigation.NavType.StringType },
-                androidx.navigation.navArgument("communityName") { type = androidx.navigation.NavType.StringType },
-                androidx.navigation.navArgument("channelName") { type = androidx.navigation.NavType.StringType }
-            )
+                route = Screen.KomunitasRoom.route,
+                arguments =
+                        listOf(
+                                androidx.navigation.navArgument("communityId") {
+                                    type = androidx.navigation.NavType.StringType
+                                },
+                                androidx.navigation.navArgument("channelId") {
+                                    type = androidx.navigation.NavType.StringType
+                                },
+                                androidx.navigation.navArgument("communityName") {
+                                    type = androidx.navigation.NavType.StringType
+                                },
+                                androidx.navigation.navArgument("channelName") {
+                                    type = androidx.navigation.NavType.StringType
+                                },
+                                androidx.navigation.navArgument("readOnly") {
+                                    type = androidx.navigation.NavType.BoolType
+                                }
+                        )
         ) { backStackEntry ->
             val communityId = backStackEntry.arguments?.getString("communityId") ?: ""
             val channelId = backStackEntry.arguments?.getString("channelId") ?: ""
             val communityName = backStackEntry.arguments?.getString("communityName") ?: ""
             val channelName = backStackEntry.arguments?.getString("channelName") ?: ""
             KomunitasRoomPage(
-                communityId = communityId,
-                channelId = channelId,
-                communityName = java.net.URLDecoder.decode(communityName, "UTF-8"),
-                channelName = java.net.URLDecoder.decode(channelName, "UTF-8"),
-                navController = navController
+                    communityId = communityId,
+                    channelId = channelId,
+                    communityName = java.net.URLDecoder.decode(communityName, "UTF-8"),
+                    channelName = java.net.URLDecoder.decode(channelName, "UTF-8"),
+                    navController = navController
             )
         }
 
@@ -374,17 +367,12 @@ fun AppNavigation() {
         composable(Screen.JelajahiKomunitas.route) {
             JelajahiKomunitasPage(navController = navController)
         }
-
     }
 }
 
 private suspend fun shouldRouteToProfile(uid: String): Boolean {
     return try {
-        val snapshot = firestore
-            .collection("users")
-            .document(uid)
-            .get()
-            .await()
+        val snapshot = firestore.collection("users").document(uid).get().await()
 
         val isProfileComplete = snapshot.getBoolean("profileComplete") == true
         !snapshot.exists() || !isProfileComplete
