@@ -55,13 +55,14 @@ sealed class Screen(val route: String) {
             return "chat_room/$peerUid/$encodedName"
         }
     }
-    object KomunitasRoom : Screen("komunitas_room/{communityName}/{channelName}") {
-        fun createRoute(communityName: String, channelName: String): String {
-            val encodedCommunity = java.net.URLEncoder.encode(communityName, "UTF-8")
-            val encodedChannel = java.net.URLEncoder.encode(channelName, "UTF-8")
-            return "komunitas_room/$encodedCommunity/$encodedChannel"
+    object KomunitasRoom : Screen("komunitas_room/{communityId}/{channelId}/{communityName}/{channelName}") {
+        fun createRoute(communityId: String, channelId: String, communityName: String, channelName: String): String {
+            val encodedCommunityName = java.net.URLEncoder.encode(communityName, "UTF-8")
+            val encodedChannelName = java.net.URLEncoder.encode(channelName, "UTF-8")
+            return "komunitas_room/$communityId/$channelId/$encodedCommunityName/$encodedChannelName"
         }
     }
+    object JelajahiKomunitas : Screen("jelajahi_komunitas")
     object PeerProfile : Screen("peer_profile/{peerUid}") {
         fun createRoute(peerUid: String) = "peer_profile/$peerUid"
     }
@@ -350,17 +351,28 @@ fun AppNavigation() {
         composable(
             route = Screen.KomunitasRoom.route,
             arguments = listOf(
+                androidx.navigation.navArgument("communityId") { type = androidx.navigation.NavType.StringType },
+                androidx.navigation.navArgument("channelId") { type = androidx.navigation.NavType.StringType },
                 androidx.navigation.navArgument("communityName") { type = androidx.navigation.NavType.StringType },
                 androidx.navigation.navArgument("channelName") { type = androidx.navigation.NavType.StringType }
             )
         ) { backStackEntry ->
+            val communityId = backStackEntry.arguments?.getString("communityId") ?: ""
+            val channelId = backStackEntry.arguments?.getString("channelId") ?: ""
             val communityName = backStackEntry.arguments?.getString("communityName") ?: ""
             val channelName = backStackEntry.arguments?.getString("channelName") ?: ""
             KomunitasRoomPage(
+                communityId = communityId,
+                channelId = channelId,
                 communityName = java.net.URLDecoder.decode(communityName, "UTF-8"),
                 channelName = java.net.URLDecoder.decode(channelName, "UTF-8"),
                 navController = navController
             )
+        }
+
+        // ── Jelajahi Komunitas ─────────────────────────────────────────
+        composable(Screen.JelajahiKomunitas.route) {
+            JelajahiKomunitasPage(navController = navController)
         }
 
     }

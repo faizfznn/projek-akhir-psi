@@ -48,6 +48,15 @@ import kotlinx.coroutines.withContext
  * communityFeed/{feedId}
  *   uid, userName, avatarUrl, type (achievement/lesson/friend), text, timestamp
  *
+ * communities/{communityId}
+ *   name, iconRes, description, memberCount, createdAt
+ *   ├── members/{uid}
+ *   │     joinedAt
+ *   ├── channels/{channelId}
+ *   │     name, type (announcement/discussion), lastMessage, lastMessageAt
+ *   │     └── messages/{messageId}
+ *   │           senderUid, senderName, text, timestamp
+ *
  * ──────────────────────────────────────────────
  */
 object FirestoreInitializer {
@@ -137,6 +146,78 @@ object FirestoreInitializer {
         )
     )
 
+    // ─── Definisi komunitas awal ──────────────────────────────────────────
+    private data class DefaultCommunity(
+        val id: String,
+        val name: String,
+        val iconRes: String,
+        val description: String,
+        val channels: List<Map<String, Any>>
+    )
+
+    private val DEFAULT_COMMUNITIES = listOf(
+        DefaultCommunity(
+            id = "pecinta_matematika",
+            name = "Pecinta Matematika",
+            iconRes = "ic_matematika",
+            description = "Komunitas pecinta matematika, diskusi soal & konsep.",
+            channels = listOf(
+                mapOf("id" to "introduction", "name" to "Introduction", "type" to "announcement"),
+                mapOf("id" to "ruang_diskusi", "name" to "Ruang Diskusi", "type" to "discussion")
+            )
+        ),
+        DefaultCommunity(
+            id = "pecinta_fisika",
+            name = "Pecinta Fisika",
+            iconRes = "ic_fisika",
+            description = "Komunitas pecinta fisika, eksperimen & teori.",
+            channels = listOf(
+                mapOf("id" to "introduction", "name" to "Introduction", "type" to "announcement"),
+                mapOf("id" to "ruang_diskusi", "name" to "Ruang Diskusi", "type" to "discussion")
+            )
+        ),
+        DefaultCommunity(
+            id = "pecinta_kimia",
+            name = "Pecinta Kimia",
+            iconRes = "ic_kimia",
+            description = "Komunitas pecinta kimia, reaksi & laboratorium.",
+            channels = listOf(
+                mapOf("id" to "introduction", "name" to "Introduction", "type" to "announcement"),
+                mapOf("id" to "ruang_diskusi", "name" to "Ruang Diskusi", "type" to "discussion")
+            )
+        ),
+        DefaultCommunity(
+            id = "pecinta_olahraga",
+            name = "Pecinta Olahraga",
+            iconRes = "ic_olahraga",
+            description = "Komunitas pecinta olahraga, aktif & sehat bersama.",
+            channels = listOf(
+                mapOf("id" to "introduction", "name" to "Introduction", "type" to "announcement"),
+                mapOf("id" to "ruang_diskusi", "name" to "Ruang Diskusi", "type" to "discussion")
+            )
+        ),
+        DefaultCommunity(
+            id = "pecinta_biologi",
+            name = "Pecinta Biologi",
+            iconRes = "ic_biologi",
+            description = "Komunitas pecinta biologi, alam & kehidupan.",
+            channels = listOf(
+                mapOf("id" to "introduction", "name" to "Introduction", "type" to "announcement"),
+                mapOf("id" to "ruang_diskusi", "name" to "Ruang Diskusi", "type" to "discussion")
+            )
+        ),
+        DefaultCommunity(
+            id = "pecinta_informatika",
+            name = "Pecinta Informatika",
+            iconRes = "ic_informatika",
+            description = "Komunitas pecinta informatika, coding & teknologi.",
+            channels = listOf(
+                mapOf("id" to "introduction", "name" to "Introduction", "type" to "announcement"),
+                mapOf("id" to "ruang_diskusi", "name" to "Ruang Diskusi", "type" to "discussion")
+            )
+        )
+    )
+
     // ─── Dokumen streak awal ──────────────────────────────────────────────
     private fun defaultStreak(): Map<String, Any?> = mapOf(
         "currentStreak" to 0,
@@ -193,6 +274,9 @@ object FirestoreInitializer {
                 Log.d(TAG, "⚙️ Achievements belum ada untuk uid=$uid, membuat...")
                 initAchievements(uid)
             }
+
+            // 3. Seed komunitas global (idempotent)
+            seedCommunities()
 
             Log.d(TAG, "✅ ensureUserInitialized selesai untuk uid=$uid")
         } catch (e: Exception) {
@@ -757,5 +841,153 @@ object FirestoreInitializer {
         cal.add(java.util.Calendar.DAY_OF_YEAR, -1)
         val sdf = java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.getDefault())
         return sdf.format(cal.time)
+    }
+
+    // ─────────────────────────────────────────────────────────────────────
+    // COMMUNITY OPERATIONS
+    // ─────────────────────────────────────────────────────────────────────
+
+    /**
+     * Seed komunitas default ke Firestore.
+     * Idempotent: tidak overwrite komunitas yang sudah ada.
+     */
+    suspend fun seedCommunities() = withContext(Dispatchers.IO) {
+        try {
+            DEFAULT_COMMUNITIES.forEach { community ->
+                val communityRef = db.collection("communities").document(community.id)
+                val snap = communityRef.get().await()
+                if (!snap.exists()) {
+                    // Buat dokumen komunitas
+                    communityRef.set(
+                        mapOf(
+                            "name" to community.name,
+                            "iconRes" to community.iconRes,
+                            "description" to community.description,
+                            "memberCount" to 0,
+                            "createdAt" to FieldValue.serverTimestamp()
+                        )
+                    ).await()
+
+                    // Buat channels default
+                    community.channels.forEach { channel ->
+                        val channelId = channel["id"] as String
+                        communityRef.collection("channels").document(channelId).set(
+                            mapOf(
+                                "name" to (channel["name"] ?: ""),
+                                "type" to (channel["type"] ?: "discussion"),
+                                "lastMessage" to "",
+                                "lastMessageAt" to FieldValue.serverTimestamp()
+                            )
+                        ).await()
+                    }
+
+                    Log.d(TAG, "✅ Komunitas ${community.name} berhasil di-seed")
+                }
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "❌ seedCommunities gagal: ${e.message}", e)
+        }
+    }
+
+    /**
+     * User bergabung ke komunitas.
+     * Menambah ke sub-koleksi members dan increment memberCount.
+     */
+    suspend fun joinCommunity(communityId: String) = withContext(Dispatchers.IO) {
+        val uid = auth.currentUser?.uid ?: return@withContext
+        try {
+            val communityRef = db.collection("communities").document(communityId)
+
+            // Cek apakah sudah jadi member
+            val memberSnap = communityRef.collection("members").document(uid).get().await()
+            if (memberSnap.exists()) {
+                Log.d(TAG, "ℹ️ User $uid sudah bergabung di komunitas $communityId")
+                return@withContext
+            }
+
+            // Tambah ke members
+            communityRef.collection("members").document(uid).set(
+                mapOf("joinedAt" to FieldValue.serverTimestamp())
+            ).await()
+
+            // Increment memberCount
+            communityRef.set(
+                mapOf("memberCount" to FieldValue.increment(1)),
+                SetOptions.merge()
+            ).await()
+
+            Log.d(TAG, "✅ User $uid bergabung ke komunitas $communityId")
+        } catch (e: Exception) {
+            Log.e(TAG, "❌ joinCommunity gagal: ${e.message}", e)
+        }
+    }
+
+    /**
+     * User keluar dari komunitas.
+     * Menghapus dari sub-koleksi members dan decrement memberCount.
+     */
+    suspend fun leaveCommunity(communityId: String) = withContext(Dispatchers.IO) {
+        val uid = auth.currentUser?.uid ?: return@withContext
+        try {
+            val communityRef = db.collection("communities").document(communityId)
+
+            // Hapus dari members
+            communityRef.collection("members").document(uid).delete().await()
+
+            // Decrement memberCount
+            communityRef.set(
+                mapOf("memberCount" to FieldValue.increment(-1)),
+                SetOptions.merge()
+            ).await()
+
+            Log.d(TAG, "✅ User $uid keluar dari komunitas $communityId")
+        } catch (e: Exception) {
+            Log.e(TAG, "❌ leaveCommunity gagal: ${e.message}", e)
+        }
+    }
+
+    /**
+     * Kirim pesan ke channel komunitas.
+     * Menambah ke sub-koleksi messages dan update lastMessage channel.
+     */
+    suspend fun sendCommunityMessage(
+        communityId: String,
+        channelId: String,
+        text: String
+    ) = withContext(Dispatchers.IO) {
+        val uid = auth.currentUser?.uid ?: return@withContext
+        try {
+            // Ambil nama pengirim
+            val userSnap = db.collection("users").document(uid).get().await()
+            val senderName = userSnap.getString("name") ?: "Pengguna"
+
+            val channelRef = db.collection("communities")
+                .document(communityId)
+                .collection("channels")
+                .document(channelId)
+
+            // Tambah pesan ke sub-koleksi messages
+            channelRef.collection("messages").add(
+                mapOf(
+                    "senderUid" to uid,
+                    "senderName" to senderName,
+                    "text" to text,
+                    "timestamp" to FieldValue.serverTimestamp()
+                )
+            ).await()
+
+            // Update lastMessage & lastMessageAt di channel
+            channelRef.set(
+                mapOf(
+                    "lastMessage" to "$senderName: $text",
+                    "lastMessageAt" to FieldValue.serverTimestamp()
+                ),
+                SetOptions.merge()
+            ).await()
+
+            Log.d(TAG, "✅ Pesan komunitas dikirim ke $communityId/$channelId")
+        } catch (e: Exception) {
+            Log.e(TAG, "❌ sendCommunityMessage gagal: ${e.message}", e)
+        }
     }
 }

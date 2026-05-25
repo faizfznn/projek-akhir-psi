@@ -33,16 +33,16 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.Campaign
+import androidx.compose.material.icons.filled.Forum
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material3.Icon
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -57,79 +57,19 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import com.google.firebase.auth.FirebaseAuth
 import com.kelompok2.scarla.R
 import com.kelompok2.scarla.ui.theme.Neutral500
 import com.kelompok2.scarla.ui.theme.Neutral600
 import com.kelompok2.scarla.ui.theme.Neutral900
-
-// ──────────────────────────────────────────────────────────────────────────────
-// DATA MODEL — Group Message (statis / UI only)
-// ──────────────────────────────────────────────────────────────────────────────
-
-data class GroupMessage(
-    val id: String,
-    val senderName: String,
-    val senderAvatar: Int,   // drawable res id, 0 = pakai inisial
-    val text: String,
-    val time: String,
-    val isMe: Boolean = false
-)
-
-// ──────────────────────────────────────────────────────────────────────────────
-// DUMMY DATA per channel
-// ──────────────────────────────────────────────────────────────────────────────
-
-private fun getDummyMessages(channelName: String): List<GroupMessage> {
-    return if (channelName == "Introduction") {
-        listOf(
-            GroupMessage(
-                id = "1",
-                senderName = "Alief Hikmawan",
-                senderAvatar = R.drawable.avatar_1,
-                text = """📋 Peraturan Grup Si Paling Ambis :
-1. Fokus Produktif – Bahas target, progres, dan ilmu. No mager talk.
-2. Aksi > Wacana – Share progress, bukan cuma rencana.
-3. Saling Dukung – Kritik membangun, bukan nyinyir.
-4. Ikut Tantangan – Ada challenge mingguan, wajib coba!
-5. Share Ilmu – Temu info bermanfaat? Bagikan ke grup.
-6. Minim Spam – Meme & chat random? Ada waktunya.
-7. Tepat Waktu – Deadlines dan diskusi jangan ngaret.
-8. Evaluasi Rutin – Cek progres tiap minggu.
-9. Jangan Hilang – Lagi drop? Ngaku, biar disemangatin.""",
-                time = "09:00",
-                isMe = false
-            )
-        )
-    } else {
-        listOf(
-            GroupMessage(
-                id = "1",
-                senderName = "Indika Putra",
-                senderAvatar = R.drawable.avatar_2,
-                text = "Guys ngoding yuk! Ada yang mau pair programming bareng?",
-                time = "10:00",
-                isMe = false
-            ),
-            GroupMessage(
-                id = "2",
-                senderName = "Kamu",
-                senderAvatar = 0,
-                text = "Siap! Lagi ngerjain apa sekarang?",
-                time = "10:02",
-                isMe = true
-            ),
-            GroupMessage(
-                id = "3",
-                senderName = "Indika Putra",
-                senderAvatar = R.drawable.avatar_2,
-                text = "Lagi ngerjain fitur auth di Android. Boleh bantu review?",
-                time = "10:03",
-                isMe = false
-            )
-        )
-    }
-}
+import com.kelompok2.scarla.ui.viewmodel.CommunityMessage
+import com.kelompok2.scarla.ui.viewmodel.KomunitasViewModel
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 // ──────────────────────────────────────────────────────────────────────────────
 // MAIN SCREEN
@@ -137,13 +77,35 @@ private fun getDummyMessages(channelName: String): List<GroupMessage> {
 
 @Composable
 fun KomunitasRoomPage(
+    communityId: String,
+    channelId: String,
     communityName: String,
     channelName: String,
-    navController: NavController? = null
+    navController: NavController? = null,
+    komunitasViewModel: KomunitasViewModel = viewModel()
 ) {
     val listState = rememberLazyListState()
-    val messages = remember(channelName) { getDummyMessages(channelName) }
-    var inputText by remember { mutableStateOf("") }
+    val uiState by komunitasViewModel.uiState.collectAsStateWithLifecycle()
+    val currentUid = FirebaseAuth.getInstance().currentUser?.uid ?: ""
+
+    // Start listening to messages when entering the room
+    LaunchedEffect(communityId, channelId) {
+        komunitasViewModel.openChannel(communityId, channelId, communityName, channelName)
+    }
+
+    // Clean up listener when leaving the room
+    DisposableEffect(Unit) {
+        onDispose {
+            komunitasViewModel.closeChannel()
+        }
+    }
+
+    // Auto-scroll to bottom when new messages arrive
+    LaunchedEffect(uiState.messages.size) {
+        if (uiState.messages.isNotEmpty()) {
+            listState.animateScrollToItem(uiState.messages.size - 1)
+        }
+    }
 
     Column(
         modifier = Modifier
@@ -181,19 +143,39 @@ fun KomunitasRoomPage(
             contentPadding = PaddingValues(horizontal = 16.dp, vertical = 16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            items(messages, key = { it.id }) { msg ->
-                GroupMessageBubble(message = msg)
+            if (uiState.messages.isEmpty()) {
+                item {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 32.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = "Belum ada pesan. Mulai percakapan! 💬",
+                            style = TextStyle(
+                                fontSize = 14.sp,
+                                fontFamily = FontFamily(Font(R.font.poppins_regular)),
+                                color = Color.White.copy(alpha = 0.7f)
+                            )
+                        )
+                    }
+                }
+            } else {
+                items(uiState.messages, key = { it.id }) { msg ->
+                    CommunityMessageBubble(
+                        message = msg,
+                        isMe = msg.senderUid == currentUid
+                    )
+                }
             }
         }
 
         // ── INPUT BAR ──────────────────────────────────────────────────
         KomunitasInputBar(
-            value = inputText,
-            onValueChange = { inputText = it },
-            onSend = {
-                // UI only — tidak kirim ke Firebase
-                inputText = ""
-            }
+            value = uiState.currentMessage,
+            onValueChange = { komunitasViewModel.onMessageChange(it) },
+            onSend = { komunitasViewModel.sendMessage() }
         )
     }
 }
@@ -323,20 +305,24 @@ private fun KomunitasRoomHeader(
 }
 
 // ──────────────────────────────────────────────────────────────────────────────
-// GROUP MESSAGE BUBBLE
+// COMMUNITY MESSAGE BUBBLE
 // ──────────────────────────────────────────────────────────────────────────────
 
 @Composable
-private fun GroupMessageBubble(message: GroupMessage) {
+private fun CommunityMessageBubble(message: CommunityMessage, isMe: Boolean) {
     val shape = RoundedCornerShape(24.dp)
-    val bubbleColor = if (message.isMe) Color(0xFFC0F5AA) else Color.White
+    val bubbleColor = if (isMe) Color(0xFFC0F5AA) else Color.White
+
+    val timeStr = if (message.timestampMillis > 0L)
+        SimpleDateFormat("HH:mm", Locale("id")).format(Date(message.timestampMillis))
+    else ""
 
     AnimatedVisibility(
         visible = true,
         enter = fadeIn() + slideInVertically(initialOffsetY = { it }),
         exit = fadeOut()
     ) {
-        if (message.isMe) {
+        if (isMe) {
             // Pesan kita — rata kanan, tanpa nama & avatar
             Column(
                 modifier = Modifier.fillMaxWidth(),
@@ -359,7 +345,7 @@ private fun GroupMessageBubble(message: GroupMessage) {
                             )
                         )
                         Text(
-                            text = message.time,
+                            text = timeStr,
                             style = TextStyle(
                                 fontSize = 11.sp,
                                 fontFamily = FontFamily(Font(R.font.poppins_regular)),
@@ -377,7 +363,7 @@ private fun GroupMessageBubble(message: GroupMessage) {
                 verticalAlignment = Alignment.Top,
                 horizontalArrangement = Arrangement.spacedBy(10.dp)
             ) {
-                // Avatar
+                // Avatar (initial-based)
                 Box(
                     modifier = Modifier
                         .size(44.dp)
@@ -385,26 +371,15 @@ private fun GroupMessageBubble(message: GroupMessage) {
                         .background(Color(0xFFFFF0A0)),
                     contentAlignment = Alignment.Center
                 ) {
-                    if (message.senderAvatar != 0) {
-                        Image(
-                            painter = painterResource(id = message.senderAvatar),
-                            contentDescription = message.senderName,
-                            modifier = Modifier
-                                .size(44.dp)
-                                .clip(CircleShape),
-                            contentScale = ContentScale.Crop
+                    Text(
+                        text = message.senderName.firstOrNull()?.uppercase() ?: "?",
+                        style = TextStyle(
+                            fontSize = 16.sp,
+                            fontFamily = FontFamily(Font(R.font.poppins_bold)),
+                            fontWeight = FontWeight(700),
+                            color = Neutral900
                         )
-                    } else {
-                        Text(
-                            text = message.senderName.firstOrNull()?.uppercase() ?: "?",
-                            style = TextStyle(
-                                fontSize = 16.sp,
-                                fontFamily = FontFamily(Font(R.font.poppins_bold)),
-                                fontWeight = FontWeight(700),
-                                color = Neutral900
-                            )
-                        )
-                    }
+                    )
                 }
 
                 // Bubble
@@ -439,7 +414,7 @@ private fun GroupMessageBubble(message: GroupMessage) {
                                 )
                             )
                             Text(
-                                text = message.time,
+                                text = timeStr,
                                 style = TextStyle(
                                     fontSize = 11.sp,
                                     fontFamily = FontFamily(Font(R.font.poppins_regular)),
