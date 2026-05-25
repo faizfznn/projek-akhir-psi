@@ -45,42 +45,50 @@ fun BelajarScreen(navController: NavController) {
         SubjectItem(
             "Bahasa",
             "Belajar banyak bahasa",
-            R.drawable.ic_bahasa
+            R.drawable.ic_bahasa,
+            "material_screen/bahasa"
         ),
         SubjectItem(
             "Math",
             "Belajar matematika",
-            R.drawable.ic_matematika
+            R.drawable.ic_matematika,
+            "material_screen/math"
         ),
         SubjectItem(
             "Fisika",
             "Belajar fisika",
-            R.drawable.ic_fisika
+            R.drawable.ic_fisika,
+            "material_screen/fisika"
         ),
         SubjectItem(
             "Kimia",
             "Belajar kimia",
-            R.drawable.ic_kimia
+            R.drawable.ic_kimia,
+            "material_screen/kimia"
         ),
         SubjectItem(
             "Biologi",
             "Belajar biologi",
-            R.drawable.ic_biologi
+            R.drawable.ic_biologi,
+            "material_screen/biologi"
         ),
         SubjectItem(
             "Sosiologi",
             "Belajar sosiologi",
-            R.drawable.ic_sosiologi
+            R.drawable.ic_sosiologi,
+            "material_screen/sosiologi"
         ),
         SubjectItem(
             "Ekonomi",
             "Belajar ekonomi",
-            R.drawable.ic_ekonomi
+            R.drawable.ic_ekonomi,
+            "material_screen/ekonomi"
         ),
         SubjectItem(
             "Geografi",
             "Belajar geografi",
-            R.drawable.ic_geografi
+            R.drawable.ic_geografi,
+            "material_screen/geografi"
         )
     )
 
