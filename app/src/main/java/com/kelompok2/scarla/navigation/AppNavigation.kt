@@ -354,11 +354,13 @@ fun AppNavigation() {
             val channelId = backStackEntry.arguments?.getString("channelId") ?: ""
             val communityName = backStackEntry.arguments?.getString("communityName") ?: ""
             val channelName = backStackEntry.arguments?.getString("channelName") ?: ""
+            val readOnly = backStackEntry.arguments?.getBoolean("readOnly") ?: false
             KomunitasRoomPage(
                     communityId = communityId,
                     channelId = channelId,
                     communityName = java.net.URLDecoder.decode(communityName, "UTF-8"),
                     channelName = java.net.URLDecoder.decode(channelName, "UTF-8"),
+                    readOnly = readOnly,
                     navController = navController
             )
         }

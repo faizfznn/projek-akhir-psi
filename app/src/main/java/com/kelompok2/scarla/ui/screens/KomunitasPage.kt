@@ -46,13 +46,13 @@ import androidx.navigation.NavController
 import com.kelompok2.scarla.R
 import com.kelompok2.scarla.navigation.Screen
 import com.kelompok2.scarla.ui.theme.Neutral900
+import com.kelompok2.scarla.ui.utils.introductionTextForCommunity
 import com.kelompok2.scarla.ui.viewmodel.CommunityChannel
 import com.kelompok2.scarla.ui.viewmodel.CommunityData
 import com.kelompok2.scarla.ui.viewmodel.KomunitasViewModel
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
-import com.kelompok2.scarla.ui.utils.introductionTextForCommunity
 
 // ──────────────────────────────────────────────────────────────────────────────
 // KOMUNITAS TAB CONTENT — Entry point composable
@@ -192,13 +192,12 @@ fun KomunitasDiikutiCard(
                     Modifier.fillMaxWidth()
                             .clip(RoundedCornerShape(20.dp))
                             .background(Color(0xFFFFCC00))
-                            // Tap card untuk toggle buka/tutup
-                            .clickable { onToggle() }
                             .padding(16.dp)
     ) {
         Column {
             // Header komunitas
             Row(
+                    modifier = Modifier.clickable { onToggle() },
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
@@ -271,29 +270,25 @@ fun KomunitasDiikutiCard(
                             modifier =
                                     Modifier.fillMaxWidth()
                                             .clip(RoundedCornerShape(10.dp))
-                                            .then(
-                                                    if (!isIntroduction) {
-                                                        Modifier.clickable {
-                                                            navController?.navigate(
-                                                                    Screen.KomunitasRoom
-                                                                            .createRoute(
-                                                                                    communityId =
-                                                                                            komunitas
-                                                                                                    .id,
-                                                                                    channelId =
-                                                                                            channel.id,
-                                                                                    communityName =
-                                                                                            komunitas
-                                                                                                    .name,
-                                                                                    channelName =
-                                                                                            channel.name,
-                                                                                            readOnly =
-                                                                                                    isIntroduction
-                                                                            )
-                                                            )
-                                                        }
-                                                    } else Modifier
-                                            )
+                                            .clickable {
+                                                navController?.navigate(
+                                                        Screen.KomunitasRoom.createRoute(
+                                                                communityId = komunitas.id,
+                                                                channelId = channel.id,
+                                                                communityName =
+                                                                        java.net.URLEncoder.encode(
+                                                                                komunitas.name,
+                                                                                "UTF-8"
+                                                                        ),
+                                                                channelName =
+                                                                        java.net.URLEncoder.encode(
+                                                                                channel.name,
+                                                                                "UTF-8"
+                                                                        ),
+                                                                readOnly = isIntroduction
+                                                        )
+                                                )
+                                            }
                                             .padding(vertical = 6.dp),
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(10.dp)
