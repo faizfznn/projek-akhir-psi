@@ -514,12 +514,35 @@ object FirestoreInitializer {
             val newLongest = maxOf(newStreak, longestStreak)
 
             // weeklyDays: index 0=Senin ... 6=Minggu
-            val weeklyDays = (snap.get("weeklyDays") as? List<*>)
+            var weeklyDays = (snap.get("weeklyDays") as? List<*>)
                 ?.map { it as? Boolean ?: false }
                 ?.toMutableList()
                 ?: MutableList(7) { false }
+            
             val dayIndex = java.util.Calendar.getInstance().get(java.util.Calendar.DAY_OF_WEEK)
                 .let { if (it == java.util.Calendar.SUNDAY) 6 else it - 2 }
+
+            // Menentukan index hari untuk lastActiveDate
+            var lastActiveDayIndex = -1
+            if (lastActive.isNotEmpty()) {
+                try {
+                    val sdf = java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.getDefault())
+                    val d = sdf.parse(lastActive)
+                    if (d != null) {
+                        val cal = java.util.Calendar.getInstance()
+                        cal.time = d
+                        lastActiveDayIndex = cal.get(java.util.Calendar.DAY_OF_WEEK)
+                            .let { if (it == java.util.Calendar.SUNDAY) 6 else it - 2 }
+                    }
+                } catch(e: Exception) {}
+            }
+
+            // Reset weeklyDays jika streak terputus (kembali ke 1) 
+            // ATAU jika berganti minggu (hari ini index-nya <= lastActiveDayIndex, misal dari Minggu(6) ke Senin(0))
+            if (newStreak == 1 || (lastActiveDayIndex != -1 && dayIndex <= lastActiveDayIndex)) {
+                weeklyDays = MutableList(7) { false }
+            }
+
             weeklyDays[dayIndex] = true
 
             // BUGFIX: pakai .set() + merge() agar dokumen dibuat jika belum ada
